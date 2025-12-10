@@ -20,6 +20,9 @@ python = ">=3.12"
 ruff = ">=0.9.9"
 snakefmt = ">=0.10.2"
 snakemake-minimal = ">=8.29.0"
+rioxarray = ">=0.20.0,<0.21"
+dask = ">=2025.11.0,<2026"
+matplotlib = ">=3.10.8,<4"
 
 [tasks]
 test-integration = {cmd = "pytest tests/clio_test.py"}

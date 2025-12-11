@@ -33,6 +33,10 @@ rule prepare_resampled_inputs:
         settlement_path=rules.clip_settlement.output,
         bathymetry_path=rules.clip_bathymetry.output,
         protected_area_path=rules.rasterise_clip_wdpa.output,
+        # solar_atlas_path=rules.clip_solar_atlas.output, # Should be this, but I am hacking now
+        solar_atlas_path='resources/automatic/cutout/{shape}/PVOUT.tif',
+        # wind_atlas_path=rules.clip_wind_atlas.output, # Should be this, but I am hacking now
+        wind_atlas_path='resources/automatic/cutout/{shape}/WINDOUT.tif',
     output:
         resampled_input="resources/automatic/resampled_inputs/{shape}/{subunit}.nc",
         plot=report(
@@ -48,7 +52,7 @@ rule prepare_resampled_inputs:
         python {input.script:q} \
         "{input.shapes}/{wildcards.subunit}.parquet" \
         {input.land_cover_path:q} {input.slope_path:q} {input.settlement_path:q} {input.bathymetry_path:q} {input.protected_area_path:q} \
-        {params.land_cover_types_yaml_string:q} \
+        {input.solar_atlas_path:q} {input.wind_atlas_path:q} {params.land_cover_types_yaml_string:q} \
         {output.resampled_input:q} {output.plot:q} 2> {log:q}
         """
 

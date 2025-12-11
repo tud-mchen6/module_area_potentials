@@ -254,3 +254,47 @@ rule rasterise_clip_wdpa:
         """
         python {input.script:q} {input.shapes:q} {input.reference_raster:q} {input.protected_areas:q} {output:q} 2> {log:q}
         """
+
+
+##
+# Solar Atlas
+##
+
+# TODO: Code auto-generated. Need to refine the rule. This downloads the atlas for the whole world and then clip it later.
+# rule download_solar_atlas:
+#     message:
+#         "Download the Solar Atlas data."
+#     params:
+#         url=internal["resources"]["automatic"]["solar_atlas"],
+#     output:
+#         "resources/automatic/global/solar_atlas.nc",
+#     log:
+#         "logs/download_solar_atlas.log",
+#     conda:
+#         "../envs/shell.yaml"
+#     shell:
+#         """
+#         curl -sSLo {output:q} {params.url:q}
+#         """
+
+
+##
+# Wind Atlas
+##
+
+# TODO: Code auto-generated. Need to refine the rule. This downloads the atlas for the whole world and then clip it later.
+# rule download_wind_atlas:
+#     message:
+#         "Download the Wind Atlas data."
+#     params:
+#         url=internal["resources"]["automatic"]["wind_atlas"],
+#     output:
+#         "resources/automatic/global/wind_atlas.nc",
+#     log:
+#         "logs/download_wind_atlas.log",
+#     conda:
+#         "../envs/shell.yaml"
+#     shell:
+#         """
+#         curl -sSLo {output:q} {params.url:q}
+#         """ 

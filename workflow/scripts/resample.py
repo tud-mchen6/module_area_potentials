@@ -136,6 +136,8 @@ def _rasterize_regions(shapes, reference_raster):
 @click.argument("settlement_path", type=str)
 @click.argument("bathymetry_path", type=str)
 @click.argument("protected_area_path", type=str)
+@click.argument("solar_atlas_path", type=str)
+@click.argument("wind_atlas_path", type=str)
 @click.argument("land_cover_configuration_yaml_string", type=str)
 @click.argument("output_path", type=str)
 @click.argument("plot_path", type=str)
@@ -146,6 +148,8 @@ def resample_inputs(
     settlement_path,
     bathymetry_path,
     protected_area_path,
+    solar_atlas_path,
+    wind_atlas_path,
     land_cover_configuration_yaml_string,
     output_path,
     plot_path,
@@ -273,6 +277,30 @@ def resample_inputs(
         reference_raster, resampling=Resampling.average
     )
     del protected_areas
+
+
+    ##
+    # Solar atlas
+    ##
+    breakpoint()
+    ds_solar_atlas = rxr.open_rasterio(solar_atlas_path)
+    # TODO: need to divide by 24
+    resampled["solar_cf"] = ds_solar_atlas.rio.reproject_match(
+        reference_raster, resampling=Resampling.average
+    )
+    del ds_solar_atlas
+
+
+    ##
+    # Wind atlas
+    ##
+    ds_wind_atlas = rxr.open_rasterio(wind_atlas_path)
+    # TODO: need to divide by 24
+    resampled["wind_cf"] = ds_wind_atlas.rio.reproject_match(
+        reference_raster, resampling=Resampling.average
+    )
+    del ds_wind_atlas
+
 
     netcdf4_encoding = {
         var: {"zlib": True, "complevel": 1}

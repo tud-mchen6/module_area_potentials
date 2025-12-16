@@ -260,41 +260,100 @@ rule rasterise_clip_wdpa:
 # Solar Atlas
 ##
 
-# TODO: Code auto-generated. Need to refine the rule. This downloads the atlas for the whole world and then clip it later.
-# rule download_solar_atlas:
-#     message:
-#         "Download the Solar Atlas data."
-#     params:
-#         url=internal["resources"]["automatic"]["solar_atlas"],
-#     output:
-#         "resources/automatic/global/solar_atlas.nc",
-#     log:
-#         "logs/download_solar_atlas.log",
-#     conda:
-#         "../envs/shell.yaml"
-#     shell:
-#         """
-#         curl -sSLo {output:q} {params.url:q}
-#         """
+rule download_solar_atlas:
+    message:
+        "Download the Solar Atlas data."
+    params:
+        url=internal["resources"]["automatic"]["solar_atlas"],
+    output:
+        path="resources/automatic/global/solar_atlas.zip",
+    log:
+        "logs/download_solar_atlas.log",
+    conda:
+        "../envs/shell.yaml"
+    shell:
+        """
+        curl -sSLo {output:q} {params.url:q}
+        """
+
+rule unzip_solar_atlas:
+    message:
+        "Unzip the relevant TIF files from the solar_atlas zip file."
+    params:
+        target_file=internal["resources"]["automatic"]["solar_atlas_tif"],
+    input:
+        script=workflow.source_path("../scripts/unzip_like.py"),
+        zipfile=rules.download_solar_atlas.output,
+    output:
+        "resources/automatic/global/PVOUT.tif",
+    log:
+        "logs/unzip_solar_atlas.log",
+    conda:
+        "../envs/shell.yaml"
+    shell:
+        """
+        python {input.script:q} {input.zipfile:q} -f {params.target_file:q} -o {output:q} 2> {log:q}
+        """
+
+
+rule clip_solar_atlas:
+    message:
+        "Cut solar atlas data to the bounds of the input shapefile."
+    input:
+        script=workflow.source_path("../scripts/clip_raster.py"),
+        shapes="resources/user/shapes/{shape}.parquet",
+        solar_atlas=rules.unzip_solar_atlas.output,
+    output:
+        "resources/automatic/cutout/{shape}/solar_out.tif",
+    log:
+        "logs/{shape}/clip_solar_atlas.log",
+    conda:
+        "../envs/default.yaml"
+    shell:
+        """
+        python {input.script:q} {input.solar_atlas:q} {input.shapes:q} {output:q} 2> {log:q}
+        """
 
 
 ##
 # Wind Atlas
 ##
 
-# TODO: Code auto-generated. Need to refine the rule. This downloads the atlas for the whole world and then clip it later.
-# rule download_wind_atlas:
-#     message:
-#         "Download the Wind Atlas data."
-#     params:
-#         url=internal["resources"]["automatic"]["wind_atlas"],
-#     output:
-#         "resources/automatic/global/wind_atlas.nc",
-#     log:
-#         "logs/download_wind_atlas.log",
-#     conda:
-#         "../envs/shell.yaml"
-#     shell:
-#         """
-#         curl -sSLo {output:q} {params.url:q}
-#         """ 
+rule download_wind_atlas:
+    message:
+        "Download the Wind Atlas data."
+    params:
+        url=internal["resources"]["automatic"]["wind_atlas"],
+    output:
+        path="resources/automatic/global/WINDOUT.tif",
+    log:
+        "logs/download_wind_atlas.log",
+    conda:
+        "../envs/shell.yaml"
+    shell:
+        """
+        wget --user-agent="Mozilla/5.0" \
+            --tries=inf \
+            --continue \
+            {params.url:q} \
+            -O {output:q}
+        """
+
+
+rule clip_wind_atlas:
+    message:
+        "Cut wind atlas data to the bounds of the input shapefile."
+    input:
+        script=workflow.source_path("../scripts/clip_raster.py"),
+        shapes="resources/user/shapes/{shape}.parquet",
+        wind_atlas=rules.download_wind_atlas.output,
+    output:
+        "resources/automatic/cutout/{shape}/wind_out.tif",
+    log:
+        "logs/{shape}/clip_wind_atlas.log",
+    conda:
+        "../envs/default.yaml"
+    shell:
+        """
+        python {input.script:q} {input.wind_atlas:q} {input.shapes:q} {output:q} 2> {log:q}
+        """

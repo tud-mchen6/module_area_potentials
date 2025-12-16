@@ -33,10 +33,8 @@ rule prepare_resampled_inputs:
         settlement_path=rules.clip_settlement.output,
         bathymetry_path=rules.clip_bathymetry.output,
         protected_area_path=rules.rasterise_clip_wdpa.output,
-        # solar_atlas_path=rules.clip_solar_atlas.output, # Should be this, but I am hacking now
-        solar_atlas_path='resources/automatic/cutout/{shape}/PVOUT.tif',
-        # wind_atlas_path=rules.clip_wind_atlas.output, # Should be this, but I am hacking now
-        wind_atlas_path='resources/automatic/cutout/{shape}/WINDOUT.tif',
+        solar_atlas_path=rules.clip_solar_atlas.output,
+        wind_atlas_path=rules.clip_wind_atlas.output,
     output:
         resampled_input="resources/automatic/resampled_inputs/{shape}/{subunit}.nc",
         plot=report(

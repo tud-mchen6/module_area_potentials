@@ -282,9 +282,8 @@ def resample_inputs(
     ##
     # Solar atlas
     ##
-    breakpoint()
     ds_solar_atlas = rxr.open_rasterio(solar_atlas_path)
-    # TODO: need to divide by 24
+    ds_solar_atlas = ds_solar_atlas / 24 # daily value, need to convert to hourly value
     resampled["solar_cf"] = ds_solar_atlas.rio.reproject_match(
         reference_raster, resampling=Resampling.average
     )
@@ -295,7 +294,6 @@ def resample_inputs(
     # Wind atlas
     ##
     ds_wind_atlas = rxr.open_rasterio(wind_atlas_path)
-    # TODO: need to divide by 24
     resampled["wind_cf"] = ds_wind_atlas.rio.reproject_match(
         reference_raster, resampling=Resampling.average
     )

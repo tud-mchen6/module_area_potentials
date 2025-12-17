@@ -10,6 +10,7 @@ import pandas as pd
 import geopandas as gpd
 import xarray as xr
 import rioxarray as rxr
+import numpy as np
 
 def yearly_production_tech(
         density : float,
@@ -54,11 +55,13 @@ def yearly_production_tech(
         tolerance=1e-6
     )
     yearly_prod = area_potentials * tech_reindexed * density * 8760
+    # Since area_potentials have -1 values, get rid of them
+    yearly_prod = yearly_prod.where(yearly_prod > 0, np.nan)
 
     # Calculate the rastered LCOE
     lcoe = (costs['CAPEX'] / (1 - (1+costs['WACC'])**(-lifetime)) * costs['WACC'] + \
             costs['OPEX']) / yearly_prod
-    # FIXME: why are the values so off here? The maximum goes up to inf
+    # FIXME: deal with the units here
 
     # Save to .nc
     prod_cost = xr.Dataset({

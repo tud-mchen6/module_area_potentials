@@ -84,6 +84,40 @@ rule area_potential:
         """
 
 
+rule yearly_production_tech:
+    message:
+        """
+        Calculate the yearly production potential of each pixel and document the area used for such production.
+        Also store the average LCOE of potential production in each pixel for each tech.
+        """
+    params:
+        density=expand(config['techs'][{tech}].get('density', {}),
+                    # tech=config['techs'].keys(),
+                    ),
+        # open_field_pv_density=config['open_field_pv_density'],
+        # rooftop_pv_density=config['rooftop_pv_density'],
+        costs=expand(config['techs'][{tech}].get('costs', {}),
+                    # tech=config['techs'].keys(),
+                    ),
+        # wind_onshore_costs=config['wind_onshore_costs'], # include CAPEX, OPEX and WACC
+        # open_field_pv_costs=config['open_field_pv_costs'],
+        # rooftop_pv_costs=config['rooftop_pv_costs'],
+    input:
+        area_potentials="results/{{shape}}/area_potential_{tech}.tif",
+    output:
+        production_all_techs="results/{shape}/{subunit}/yearly_production_{tech}.tif",
+    log:
+        "logs/{shape}/{subunit}/yearly_production_area.log",
+    conda:
+        "../envs/default.yaml"
+    script:
+        "../scripts/yearly_production_tech.py"
+
+
+rule yearly_production_synthesis:
+
+
+
 rule aggregate_area_potential:
     message:
         "Aggregate area potential for the tech {wildcards.tech} in {wildcards.shape}."

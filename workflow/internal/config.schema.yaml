@@ -47,6 +47,16 @@ properties:
           type: object
       required: ["initial_area", "continuous_layers", "binary_layers"]
       additionalProperties: false
+    density:
+      type: float
+      description: "Density of renewable technology in MW/km2."
+    cost:
+      CAPEX:
+        type: float
+      OPEX:
+        type: float
+      WACC:
+        type: float
 
   overrides:
     type: object

@@ -27,6 +27,11 @@ techs:
       landcover_OTHER: 1
       landcover_NOT_SUITABLE: 0
       landcover_WATER: 0
+    density: 5
+    cost: # TODO: this needs to be country-specific
+      CAPEX: 70
+      OPEX: 4
+      WACC: 4
   pv_open_field:
     initial_area: pixel_area
     continuous_layers:

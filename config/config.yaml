@@ -28,7 +28,8 @@ techs:
       landcover_NOT_SUITABLE: 0
       landcover_WATER: 0
     density: 5
-    cost: # TODO: this needs to be country-specific
+    lifetime: 20
+    costs: # TODO: this needs to be country-specific
       CAPEX: 70
       OPEX: 4
       WACC: 4
@@ -51,6 +52,12 @@ techs:
       landcover_OTHER: 0.2
       landcover_NOT_SUITABLE: 0
       landcover_WATER: 0
+    density: 10
+    lifetime: 20
+    costs: # TODO: this needs to be country-specific
+      CAPEX: 70
+      OPEX: 4
+      WACC: 4
   wind_onshore:
     initial_area: pixel_area
     continuous_layers:
@@ -70,6 +77,12 @@ techs:
       landcover_OTHER: 0.3
       landcover_NOT_SUITABLE: 0
       landcover_WATER: 0
+    density: 5
+    lifetime: 30
+    costs: # TODO: this needs to be country-specific
+      CAPEX: 140
+      OPEX: 4
+      WACC: 4
   wind_offshore:
     initial_area: pixel_area
     continuous_layers:

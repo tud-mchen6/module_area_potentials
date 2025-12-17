@@ -45,18 +45,23 @@ properties:
             type: number
         shapes_buffer:
           type: object
+        density:
+          type: number
+          description: "Density of renewable technology in MW/km2."
+        lifetime:
+          type: number
+        costs:
+          type: object
+          additionalProperties:
+            CAPEX:
+              type: number
+            OPEX:
+              type: number
+            WACC:
+              type: number
       required: ["initial_area", "continuous_layers", "binary_layers"]
       additionalProperties: false
-    density:
-      type: float
-      description: "Density of renewable technology in MW/km2."
-    cost:
-      CAPEX:
-        type: float
-      OPEX:
-        type: float
-      WACC:
-        type: float
+    
 
   overrides:
     type: object

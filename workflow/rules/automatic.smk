@@ -304,7 +304,7 @@ rule clip_solar_atlas:
         shapes="resources/user/shapes/{shape}.parquet",
         solar_atlas=rules.unzip_solar_atlas.output,
     output:
-        "resources/automatic/cutout/{shape}/solar_out.tif",
+        "resources/automatic/cutout/{shape}/pv_out.tif",
     log:
         "logs/{shape}/clip_solar_atlas.log",
     conda:

@@ -284,7 +284,7 @@ def resample_inputs(
     ##
     ds_solar_atlas = rxr.open_rasterio(solar_atlas_path)
     ds_solar_atlas = ds_solar_atlas / 24 # daily value, need to convert to hourly value
-    resampled["solar_cf"] = ds_solar_atlas.rio.reproject_match(
+    resampled["pv_cf"] = ds_solar_atlas.rio.reproject_match(
         reference_raster, resampling=Resampling.average
     )
     del ds_solar_atlas

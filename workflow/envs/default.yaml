@@ -23,4 +23,5 @@ dependencies:
   - utm=0.7.0
   - glom=24.11.0
   - dask=2025.7.0
-  - ipdb
+  - ipdb=0.13.13
+  - numpy=2.3.5

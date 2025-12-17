@@ -22,11 +22,11 @@ def yearly_production_tech(
     """_summary_
 
     Args:
-        density (float): _description_
-        lifetime (int): 
-        costs (dict): _description_
-        area_potentials_path (_type_): _description_
-        resampled_path (_type_): _description_
+        density (float): MW/m2
+        lifetime (int): year
+        costs (dict): EUR/MW
+        area_potentials_path (str): _description_
+        resampled_path (str): _description_
         output_path (str): _description_
     """
     
@@ -45,11 +45,20 @@ def yearly_production_tech(
 
     # Calculate the yearly aggregated production
     # Assuming same production level for each year
-    yearly_prod = area_potentials * density * resampled[cf_map[tech]] * 8760
+
+    # Reindex to keep the original coordinates
+    tech_reindexed = resampled[cf_map[tech]].reindex(
+        y=area_potentials.y,
+        x=area_potentials.x,
+        method='nearest',
+        tolerance=1e-6
+    )
+    yearly_prod = area_potentials * tech_reindexed * density * 8760
 
     # Calculate the rastered LCOE
-    lcoe = costs['CAPEX'] / yearly_prod * (1 - (1+costs['WACC'])^(-lifetime)) * costs['WACC'] + \
-            costs['OPEX'] / yearly_prod
+    lcoe = (costs['CAPEX'] / (1 - (1+costs['WACC'])**(-lifetime)) * costs['WACC'] + \
+            costs['OPEX']) / yearly_prod
+    # FIXME: why are the values so off here? The maximum goes up to inf
 
     # Save to .nc
     prod_cost = xr.Dataset({

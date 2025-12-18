@@ -67,3 +67,6 @@ properties:
     type: object
     additionalProperties:
       type: object
+      properties:
+        land_cost_curve_tech:
+          type: string

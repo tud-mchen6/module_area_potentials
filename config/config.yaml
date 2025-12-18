@@ -30,9 +30,10 @@ techs:
     density: 5
     lifetime: 20
     costs: # TODO: this needs to be country-specific
-      CAPEX: 70
-      OPEX: 4
+      CAPEX: 505000
+      OPEX: 7900
       WACC: 0.04
+      # TODO: the current OPEX is FOM, need to add variable OM?
   pv_open_field:
     initial_area: pixel_area
     continuous_layers:
@@ -55,9 +56,9 @@ techs:
     density: 10
     lifetime: 20
     costs: # TODO: this needs to be country-specific
-      CAPEX: 70
-      OPEX: 4
-      WACC: 0.04
+      CAPEX: 240000
+      OPEX: 5000
+      WACC: 0.08
   wind_onshore:
     initial_area: pixel_area
     continuous_layers:
@@ -80,9 +81,9 @@ techs:
     density: 5
     lifetime: 30
     costs: # TODO: this needs to be country-specific
-      CAPEX: 140
-      OPEX: 4
-      WACC: 0.04
+      CAPEX: 960000
+      OPEX: 11340
+      WACC: 0.08
   wind_offshore:
     initial_area: pixel_area
     continuous_layers:
@@ -96,6 +97,12 @@ techs:
       protected: 0
     shapes_buffer:
       land: 10000  # meters
+    density: 15
+    lifetime: 30
+    costs: # TODO: this needs to be country-specific
+      CAPEX: 1680000
+      OPEX: 32493
+      WACC: 0.1
 
 # Optional: override settings for specific subunits (countries, regions, etc.)
 # This allows you to set specific parameters that differ from the defaults,
@@ -110,3 +117,4 @@ overrides:
     wind_offshore:
       shapes_buffer:
         land: 22000  # 22 km = 12 nautical miles
+  land_cost_curve_tech: wind_onshore

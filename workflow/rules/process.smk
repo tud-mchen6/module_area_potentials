@@ -108,7 +108,26 @@ rule yearly_production_tech:
         "../scripts/yearly_production_tech.py"
 
 
-rule yearly_production_synthesis:
+rule land_cost_curves:
+    message:
+        """
+        Synthesise the potential production of all technologies for the given shape, then
+        produce land curves and supply cost curves for combined given technologies.
+        Only applies to onshore wind and open field PV.
+        """
+    params:
+        single_tech=config.get("land_cost_curve_tech", {}),
+    input:
+        expand(
+            "results/{shape}/yearly_production_lcoe_{tech}.nc",
+            tech=config["techs"].keys(),
+        ),
+    output:
+        curve_data="results/{shape}/{subunit}/curves_data.nc"
+    conda:
+        "../envs/default.yaml"
+    script:
+        "../scripts/land_cost_curves.py"
 
 
 

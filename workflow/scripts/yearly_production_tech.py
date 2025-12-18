@@ -33,8 +33,9 @@ def yearly_production_tech(
     
     # Get the tech name
     tech = snakemake.wildcards.tech
-    # Get the area potentials
+    # Get the area potentials, convert to km2
     area_potentials = rxr.open_rasterio(area_potentials_path)
+    area_potentials = area_potentials * 1e-6
     # Load the capacity factor within the resampled input
     cf_map = {
         'pv_rooftop': 'pv_cf',
@@ -54,7 +55,7 @@ def yearly_production_tech(
         method='nearest',
         tolerance=1e-6
     )
-    yearly_prod = area_potentials * cf * density * 8760 * 1e-6 # switch from m2 to km2
+    yearly_prod = area_potentials * cf * density * 8760
     # Since area_potentials have -1 values, get rid of them
     yearly_prod = yearly_prod.where(yearly_prod > 0, np.nan)
 
@@ -64,6 +65,7 @@ def yearly_production_tech(
 
     # Save to .nc
     prod_cost = xr.Dataset({
+        'area': area_potentials,
         'prod': yearly_prod,
         'lcoe': lcoe,
     })

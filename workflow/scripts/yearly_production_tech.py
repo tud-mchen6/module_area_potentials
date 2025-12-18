@@ -48,20 +48,19 @@ def yearly_production_tech(
     # Assuming same production level for each year
 
     # Reindex to keep the original coordinates
-    tech_reindexed = resampled[cf_map[tech]].reindex(
+    cf = resampled[cf_map[tech]].reindex(
         y=area_potentials.y,
         x=area_potentials.x,
         method='nearest',
         tolerance=1e-6
     )
-    yearly_prod = area_potentials * tech_reindexed * density * 8760
+    yearly_prod = area_potentials * cf * density * 8760 * 1e-6 # switch from m2 to km2
     # Since area_potentials have -1 values, get rid of them
     yearly_prod = yearly_prod.where(yearly_prod > 0, np.nan)
 
     # Calculate the rastered LCOE
     lcoe = (costs['CAPEX'] / (1 - (1+costs['WACC'])**(-lifetime)) * costs['WACC'] + \
-            costs['OPEX']) / yearly_prod
-    # FIXME: deal with the units here
+            costs['OPEX']) / (cf * 8760)
 
     # Save to .nc
     prod_cost = xr.Dataset({

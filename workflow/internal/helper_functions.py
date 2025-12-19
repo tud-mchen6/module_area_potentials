@@ -59,7 +59,7 @@ def allocate_with_sharing(ds,
     denom = (1.0 - s)
     capA = xr.where(denom > 0,
                     (pixel_area - area_low) / denom,
-                    xr.where(area_low <= pixel_area, area_low, 0.0))
+                    area_low)
     # Bound to [0, area_low]
     capA = capA.clip(min=0).where(np.isfinite(capA), 0.0)
     capA = xr.where(capA <= area_low, capA, area_low)
@@ -74,7 +74,6 @@ def allocate_with_sharing(ds,
     cap = xr.where(only_cheapest, 0.0, cap)
 
     # New area for second-cheapest: cap downwards; leave unchanged where pair invalid
-    
     new_area_second = xr.where(
         valid_area_pair,
         xr.apply_ufunc(np.minimum, area_second, cap),

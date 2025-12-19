@@ -33,9 +33,8 @@ def yearly_production_tech(
     
     # Get the tech name
     tech = snakemake.wildcards.tech
-    # Get the area potentials, convert to km2
+    # Get the area potentials
     area_potentials = rxr.open_rasterio(area_potentials_path)
-    area_potentials = area_potentials * 1e-6
     # Load the capacity factor within the resampled input
     cf_map = {
         'pv_rooftop': 'pv_cf',
@@ -55,13 +54,16 @@ def yearly_production_tech(
         method='nearest',
         tolerance=1e-6
     )
-    yearly_prod = area_potentials * cf * density * 8760
+    # area convert to km2
+    yearly_prod = area_potentials * cf * density * 8760 * 1e-6
     # Since area_potentials have -1 values, get rid of them
     yearly_prod = yearly_prod.where(yearly_prod > 0, np.nan)
 
     # Calculate the rastered LCOE
     lcoe = (costs['CAPEX'] / (1 - (1+costs['WACC'])**(-lifetime)) * costs['WACC'] + \
             costs['OPEX']) / (cf * 8760)
+    # Make the not-eligible areas also without lcoe data
+    lcoe = lcoe.where(yearly_prod > 0, np.nan)
 
     # Save to .nc
     prod_cost = xr.Dataset({
@@ -69,6 +71,10 @@ def yearly_production_tech(
         'prod': yearly_prod,
         'lcoe': lcoe,
     })
+    # add tech as a dimension, prepare for the synthesis
+    prod_cost = prod_cost.rename_dims({"band": "tech"})
+    prod_cost = prod_cost.assign_coords(tech=[tech])
+    prod_cost = prod_cost.drop_vars('band')
     prod_cost.to_netcdf(output_path)
 
 if __name__ == "__main__":

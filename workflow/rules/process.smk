@@ -118,8 +118,10 @@ rule land_cost_curves:
     params:
         single_tech=config.get("land_cost_curve_tech", {}),
     input:
-        expand(
-            "results/{shape}/yearly_production_lcoe_{tech}.nc",
+        inputs=lambda wildcards: expand(
+            "results/{shape}/{subunit}/yearly_production_lcoe_{tech}.nc",
+            shape=wildcards.shape,
+            subunit=wildcards.subunit,
             tech=config["techs"].keys(),
         ),
     output:

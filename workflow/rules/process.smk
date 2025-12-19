@@ -117,6 +117,7 @@ rule land_cost_curves:
         """
     params:
         single_tech=config.get("land_cost_curve_tech", {}),
+        land_share_type=config.get("land_share_type", {}),
     input:
         inputs=lambda wildcards: expand(
             "results/{shape}/{subunit}/yearly_production_lcoe_{tech}.nc",
@@ -124,6 +125,7 @@ rule land_cost_curves:
             subunit=wildcards.subunit,
             tech=config["techs"].keys(),
         ),
+        resampled_input="resources/automatic/resampled_inputs/{shape}/{subunit}.nc",
     output:
         curve_data="results/{shape}/{subunit}/curves_data.nc"
     conda:

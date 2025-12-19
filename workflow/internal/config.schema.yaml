@@ -52,20 +52,26 @@ properties:
           type: number
         costs:
           type: object
-          additionalProperties:
+          properties:
             CAPEX:
               type: number
             OPEX:
               type: number
             WACC:
               type: number
+          required: ["CAPEX", "OPEX", "WACC"]
+          additionalProperties: false
       required: ["initial_area", "continuous_layers", "binary_layers"]
       additionalProperties: false
     
 
   overrides:
     type: object
-    additionalProperties:
-      properties:
-        land_cost_curve_tech:
-          type: string
+    additionalProperties: true
+      # properties:
+  
+  land_cost_curve_tech:
+    type: string
+  
+  land_share_type:
+    type: number

@@ -117,4 +117,7 @@ overrides:
     wind_offshore:
       shapes_buffer:
         land: 22000  # 22 km = 12 nautical miles
-  land_cost_curve_tech: wind_onshore
+
+land_cost_curve_tech: wind_onshore
+
+land_share_type: 0.5

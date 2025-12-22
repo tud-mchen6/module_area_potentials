@@ -50,7 +50,6 @@ def land_share_calculation(
         land_share_type = -1
 
     ds_land_processed = allocate_with_sharing(ds_combined, land_share_type)
-    breakpoint()
     
     if len(single_tech) > 0:
         # if only require the curves of one specific technology (can be modified into several specified technologies)

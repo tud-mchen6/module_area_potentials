@@ -143,7 +143,7 @@ rule plot_supply_and_land_curves:
         synth_ds=rules.land_share.output,
     output:
         supply_curve_path="results/{shape}/{subunit}/supply_curve_{shape}_{subunit}.png",
-        land_curve_path="results/{shape}/{subunit}/supply_curve_{shape}_{subunit}.png",
+        land_curve_path="results/{shape}/{subunit}/land_curve_{shape}_{subunit}.png",
     conda:
         "../envs/default.yaml"
     script:

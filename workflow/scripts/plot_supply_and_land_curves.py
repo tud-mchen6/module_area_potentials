@@ -23,14 +23,14 @@ def plot_supply_and_land_curves(
 
     
     breakpoint()
-    synth_ds = xr.open_dataset("your_dataset.nc")
-    prep = prepare_global_order(synth_ds)
+    ds = xr.open_dataset(synth_ds)
+    prep = prepare_global_order(ds)
     
     # 1) Supply curve as line
     plot_supply_curve_line(prep)
     
     # 3) Land-use curve (line) with overlap handling
-    x_pts, y_pts, x_lab = build_land_use_curve_points(synth_ds, prep, area_var=AREA_VAR, overlap_var=OVERLAP_VAR, output_path=supply_curve_path)
+    x_pts, y_pts, x_lab = build_land_use_curve_points(ds, prep, area_var=AREA_VAR, overlap_var=OVERLAP_VAR, output_path=supply_curve_path)
     plot_land_use_curve_line(x_pts, y_pts, x_lab, area_label="Cumulative land (e.g., km²)", output_path=land_curve_path)
     
     

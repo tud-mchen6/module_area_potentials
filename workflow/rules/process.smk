@@ -108,12 +108,12 @@ rule yearly_production_tech:
         "../scripts/yearly_production_tech.py"
 
 
-rule land_cost_curves:
+rule land_share:
     message:
         """
         Synthesise the potential production of all technologies for the given shape, then
         produce land curves and supply cost curves for combined given technologies.
-        Only applies to onshore wind and open field PV.
+        Land sharing only applies to onshore wind and open field PV.
         """
     params:
         single_tech=config.get("land_cost_curve_tech", {}),
@@ -131,8 +131,23 @@ rule land_cost_curves:
     conda:
         "../envs/default.yaml"
     script:
-        "../scripts/land_cost_curves.py"
+        "../scripts/land_share.py"
 
+
+rule plot_supply_and_land_curves:
+    message:
+        """
+        blabla
+        """
+    input:
+        synth_ds=rules.land_share.output,
+    output:
+        supply_curve_path="results/{shape}/{subunit}/supply_curve_{shape}_{subunit}.png",
+        land_curve_path="results/{shape}/{subunit}/supply_curve_{shape}_{subunit}.png",
+    conda:
+        "../envs/default.yaml"
+    script:
+        "../scripts/plot_supply_and_land_curves.py"
 
 
 rule aggregate_area_potential:

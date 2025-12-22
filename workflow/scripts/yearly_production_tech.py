@@ -54,7 +54,7 @@ def yearly_production_tech(
         method='nearest',
         tolerance=1e-6
     )
-    # area convert to km2
+    # area convert to km2; production unit is MWh
     yearly_prod = area_potentials * cf * density * 8760 * 1e-6
     # Since area_potentials have -1 values, get rid of them
     yearly_prod = yearly_prod.where(yearly_prod > 0, np.nan)

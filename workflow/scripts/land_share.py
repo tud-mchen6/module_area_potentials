@@ -9,18 +9,19 @@ import numpy as np
 from internal.helper_functions import *
 
 
-def land_cost_curves(
+def land_share_calculation(
         inputs,
         resampled_input,
         land_share_type,
         output_path,
-        single_tech : str = None,
+        single_tech,
 ):
     """_summary_
 
     Args:
         inputs:
         resampled_input:
+        land_share_type:
         output_path:
         single_tech:
     """
@@ -29,6 +30,7 @@ def land_cost_curves(
     # wind offshore will not have land issues, therefore will only appear in
     # cost curves
     
+    # read data from all technology Datasets
     datasets = []
     for item in inputs:
         # rooftop PV is not part of the game, will not appear anywhere
@@ -37,25 +39,36 @@ def land_cost_curves(
         ds = xr.open_dataset(item)
         datasets.append(ds)
     combined = xr.concat(datasets, dim="tech")
+    # get the area per pixel to prepare for the land overlap calculation
     resampled = xr.open_dataset(resampled_input)
     pixel_area = resampled.pixel_area
-    ds = combined.assign(pixel_area=pixel_area)
-    breakpoint()
-
+    ds_combined = combined.assign(pixel_area=pixel_area)
+    
+    # assigned land share type between technologies. If valued -1, then one
+    # pixel can only be used for exclusively one technology.
     if not land_share_type:
         land_share_type = -1
 
-    ds_land_processed = allocate_with_sharing(ds, land_share_type)
-    # TODO: check if this function actually does what I want it to do
-
+    ds_land_processed = allocate_with_sharing(ds_combined, land_share_type)
+    breakpoint()
+    
+    if len(single_tech) > 0:
+        # if only require the curves of one specific technology (can be modified into several specified technologies)
+        print('single tech')
+        # select only one technology in ds_land_processed (might be cropped because of land competition with other
+        # technologies)
+        ds = ds_land_processed.sel(tech=single_tech)
 
     
+    ds.to_netcdf(output_path)
+
+
 
 
 
 
 if __name__ == "__main__":
-    land_cost_curves(
+    land_share_calculation(
         inputs=snakemake.input.inputs,
         resampled_input=snakemake.input.resampled_input,
         land_share_type=snakemake.params.land_share_type,

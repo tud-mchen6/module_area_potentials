@@ -127,7 +127,7 @@ rule land_share:
         ),
         resampled_input="resources/automatic/resampled_inputs/{shape}/{subunit}.nc",
     output:
-        curve_data="results/{shape}/{subunit}/curves_data.nc"
+        curve_data="results/{shape}/{subunit}/curves_data_prep.nc"
     conda:
         "../envs/default.yaml"
     script:

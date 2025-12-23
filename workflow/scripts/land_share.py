@@ -52,14 +52,11 @@ def land_share_calculation(
     ds_land_processed = allocate_with_sharing(ds_combined, land_share_type)
     
     if len(single_tech) > 0:
-        # if only require the curves of one specific technology (can be modified into several specified technologies)
-        print('single tech')
-        # select only one technology in ds_land_processed (might be cropped because of land competition with other
-        # technologies)
-        ds = ds_land_processed.sel(tech=single_tech)
+        # if only require the curves of one specific technology (TODO: can be modified into several specified technologies)
+        # keep the tech dimension in the Dataset
+        ds_land_processed = ds_land_processed.where(ds_land_processed.tech==single_tech, drop=True)
 
-    
-    ds.to_netcdf(output_path)
+    ds_land_processed.to_netcdf(output_path)
 
 
 

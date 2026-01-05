@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from typing import Dict, List, Optional, Tuple
 
 
-# Author: Copilot
+# Original author: Copilot
 def allocate_with_sharing(ds,
                           share,
                           area_var='area',
@@ -14,7 +14,7 @@ def allocate_with_sharing(ds,
                           pixel_area_var='pixel_area'):
     """
     Adjusts the area/prod of the second-cheapest technology per pixel according to a 'share' factor
-    and adds an (y,x) 'overlap' variable for the shared area. Fully vectorized.
+    and adds an (y,x) 'overlap' variable for the shared area.
     
     share semantics:
       -1 : only cheapest tech allowed (second tech area -> 0)
@@ -23,7 +23,7 @@ def allocate_with_sharing(ds,
     """
 
     # --- Prepare LCOE ranking (ignore NaNs via +inf) ---
-    lcoe = ds[lcoe_var]
+    lcoe = ds[lcoe_var]                          # (tech,y,x)
     lcoe_filled = lcoe.where(np.isfinite(lcoe), np.inf)
 
     # Select the tech that has the lowest lcoe in each pixel
@@ -31,7 +31,8 @@ def allocate_with_sharing(ds,
     idx_low = lcoe_filled.argmin('tech')         # (y,x)
     # Get the lowest lcoe values
     min_low = lcoe_filled.min('tech')            # (y,x)
-    # Get the mask of the non-nan pixels for this specific tech
+    # Get the mask of the non-nan pixels for the cheapest tech in each pixel
+    # Meaning, if not valid, then this pixel does not have potential for any tech
     valid_low = np.isfinite(min_low)
 
     # Mask out cheapest to find second-cheapest
@@ -52,6 +53,7 @@ def allocate_with_sharing(ds,
     pixel_area = ds[pixel_area_var]                   # (y,x)
 
     # valid pair: both lcoe valid and both areas finite
+    # important since not every pixel has both techs
     valid_area_pair = (valid_low & valid_second &
                        np.isfinite(area_low) & np.isfinite(area_second))
 
@@ -62,7 +64,7 @@ def allocate_with_sharing(ds,
     # a2' is the new area for second-cheapest after applying sharing rules
     # cap is the largest value of a2' allowed
 
-    # Case A cap (a2' <= area_low)
+    # Case A: a2' <= area_low
     # For s < 1: capA = (pixel_area - area_low) / (1 - s)
     # For s = 1: feasible capA is area_low if area_low <= pixel_area
     denom = (1.0 - s)
@@ -73,7 +75,8 @@ def allocate_with_sharing(ds,
     capA = capA.clip(min=0).where(np.isfinite(capA), 0.0)
     capA = xr.where(capA <= area_low, capA, area_low)
 
-    # Case B cap (a2' >= area_low): capB = pixel_area - (1 - s) * area_low
+    # Case B: a2' >= area_low
+    # capB = pixel_area - (1 - s) * area_low
     capB = (pixel_area - (1.0 - s) * area_low).clip(min=0)
 
     # Unified cap: if capB >= area_low, we can be in case B; else, use case A

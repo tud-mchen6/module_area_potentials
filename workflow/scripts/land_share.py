@@ -15,13 +15,15 @@ def land_share_calculation(
         land_share_type,
         output_path,
 ):
-    """_summary_
+    """Produce the dataset that allows the cost curve and land curve 
+    based on the ranking of vRES production LCOE of pixels.
 
     Args:
-        inputs:
-        resampled_input:
-        land_share_type:
-        output_path:
+        inputs: list of str - paths to datasets of yearly production of all technologies
+        resampled_input: str - path to the resampled input dataset
+        land_share_type: int - the integer of land sharing mode between onshore wind and 
+            open field PV.
+        output_path: str - path to the output NetCDF file
     """
 
     

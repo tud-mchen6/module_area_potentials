@@ -112,11 +112,11 @@ rule land_share:
     message:
         """
         Synthesise the potential production of all technologies for the given shape, then
-        produce land curves and supply cost curves for combined given technologies.
+        produce data for land curves and supply cost curves for combined given technologies.
         Land sharing only applies to onshore wind and open field PV.
         """
     params:
-        land_share_type=config.get("land_share_type", {}),
+        land_share_type=config.get("land_share_type", None),
     input:
         inputs=lambda wildcards: expand(
             "results/{shape}/{subunit}/yearly_production_lcoe_{tech}.nc",
@@ -136,7 +136,7 @@ rule land_share:
 rule plot_supply_and_land_curves:
     message:
         """
-        blabla
+        Plot the supply cost curve and land use curve for the given shape and subunit.
         """
     input:
         synth_ds=rules.land_share.output,

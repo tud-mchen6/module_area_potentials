@@ -31,6 +31,7 @@ def plot_supply_and_land_curves(
         # keep the tech dimension in the Dataset
         ds = ds.where(ds.tech==single_tech, drop=True)
 
+    # TODO: Take offshore wind out since it has no land use 
     prep = prepare_global_order(ds)
     
 
@@ -43,7 +44,7 @@ def plot_supply_and_land_curves(
     )
     
     # 2) Land-use curve (line) with overlap handling
-    # Take offshore wind out since it has no land use
+
     x_pts, y_pts, x_lab = build_land_use_curve_points(ds, prep, area_var=AREA_VAR, overlap_var=OVERLAP_VAR)
     plot_land_use_curve_line(x_pts, y_pts, x_lab, area_label="Cumulative land (km²)", output_path=land_curve_path)
     

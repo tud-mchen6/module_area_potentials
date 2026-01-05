@@ -14,7 +14,7 @@ def allocate_with_sharing(ds,
                           pixel_area_var='pixel_area'):
     """
     Adjusts the area/prod of the second-cheapest technology per pixel according to a 'share' factor
-    and adds an (y,x) 'overlap' variable for the shared area. Fully vectorized (no loops).
+    and adds an (y,x) 'overlap' variable for the shared area. Fully vectorized.
     
     share semantics:
       -1 : only cheapest tech allowed (second tech area -> 0)
@@ -26,12 +26,16 @@ def allocate_with_sharing(ds,
     lcoe = ds[lcoe_var]
     lcoe_filled = lcoe.where(np.isfinite(lcoe), np.inf)
 
-    # Cheapest (index & value)
+    # Select the tech that has the lowest lcoe in each pixel
+    # Get the index of the cheapest tech
     idx_low = lcoe_filled.argmin('tech')         # (y,x)
+    # Get the lowest lcoe values
     min_low = lcoe_filled.min('tech')            # (y,x)
+    # Get the mask of the non-nan pixels for this specific tech
     valid_low = np.isfinite(min_low)
 
     # Mask out cheapest to find second-cheapest
+    # tech_index to map tech names to integers
     tech_index = xr.DataArray(np.arange(ds.dims['tech']),
                               coords={'tech': ds['tech']}, dims=['tech'])  # (tech)
     mask_low = (tech_index == idx_low)                                   # (tech,y,x)
@@ -55,9 +59,12 @@ def allocate_with_sharing(ds,
     s = np.clip(share, 0.0, 1.0)   # effective sharing (negative treated separately)
     only_cheapest = (share < 0)
 
+    # a2' is the new area for second-cheapest after applying sharing rules
+    # cap is the largest value of a2' allowed
+
     # Case A cap (a2' <= area_low)
     # For s < 1: capA = (pixel_area - area_low) / (1 - s)
-    # For s = 1: feasible capA is area_low if area_low <= pixel_area, else 0
+    # For s = 1: feasible capA is area_low if area_low <= pixel_area
     denom = (1.0 - s)
     capA = xr.where(denom > 0,
                     (pixel_area - area_low) / denom,
@@ -125,10 +132,6 @@ PROD_DIVISOR = 1e6  # MWh -> TWh
 
 # Filtering
 REQUIRE_POSITIVE_PROD = True
-
-# Numerical stability
-EPS = 1e-12
-
 
 # Technology colors
 TECH_COLORS = {
@@ -329,7 +332,6 @@ def plot_supply_curve_bars(
     prep: Dict[str, np.ndarray],
     output_path: str,
     bin_count: Optional[int] = None,
-    max_bars_to_plot: Optional[int] = None,
     rasterized: bool = False,
     title: str = "Supply Curve"
 ):
@@ -357,14 +359,6 @@ def plot_supply_curve_bars(
         x_label = "Cumulative production (TWh)"
     else:
         x_label = "Cumulative production (MWh)"
-
-    # Truncate (if requested)
-    if max_bars_to_plot is not None and len(x_width) > max_bars_to_plot:
-        lcoe_sorted = lcoe_sorted[:max_bars_to_plot]
-        x_width = x_width[:max_bars_to_plot]
-        x_left = x_left[:max_bars_to_plot]
-        if tech_sorted_id is not None:
-            tech_sorted_id = tech_sorted_id[:max_bars_to_plot]
 
     plt.figure(figsize=(11, 6), dpi=120)
 
@@ -425,6 +419,9 @@ def plot_supply_curve_bars(
             legend_items = []
             T = len(tech_names)
             for t in range(T):
+                breakpoint()
+                # NEEDAUNDERSTAND: what is this m? Is it a mask (an array of booleans)?
+                breakpoint()
                 m = (tech_sorted_id == t)
                 if not np.any(m):
                     continue

@@ -96,7 +96,7 @@ rule yearly_production_tech:
         lifetime=lambda wildcards: config["techs"][f"{wildcards.tech}"]["lifetime"],
         costs=lambda wildcards: config["techs"][f"{wildcards.tech}"]["costs"],
     input:
-        area_potentials_path="results/{shape}/area_potential_{tech}.tif",
+        area_potentials_path="results/{shape}/{subunit}/area_potential_{tech}.tif",
         resampled_path="resources/automatic/resampled_inputs/{shape}/{subunit}.nc",
     output:
         production_tech="results/{shape}/{subunit}/yearly_production_lcoe_{tech}.nc",
@@ -116,7 +116,6 @@ rule land_share:
         Land sharing only applies to onshore wind and open field PV.
         """
     params:
-        single_tech=config.get("land_cost_curve_tech", {}),
         land_share_type=config.get("land_share_type", {}),
     input:
         inputs=lambda wildcards: expand(
@@ -141,6 +140,8 @@ rule plot_supply_and_land_curves:
         """
     input:
         synth_ds=rules.land_share.output,
+    params:
+        single_tech=config.get("land_cost_curve_tech", {}),
     output:
         supply_curve_path="results/{shape}/{subunit}/supply_curve_{shape}_{subunit}.png",
         land_curve_path="results/{shape}/{subunit}/land_curve_{shape}_{subunit}.png",

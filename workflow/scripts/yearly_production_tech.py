@@ -47,7 +47,8 @@ def yearly_production_tech(
     # Calculate the yearly aggregated production
     # Assuming same production level for each year
 
-    # Reindex to keep the original coordinates
+    # Reindex to keep the original coordinates, otherwise there will be
+    # missing pixels in the result
     cf = resampled[cf_map[tech]].reindex(
         y=area_potentials.y,
         x=area_potentials.x,

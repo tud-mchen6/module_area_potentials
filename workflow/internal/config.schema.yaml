@@ -55,10 +55,13 @@ properties:
           properties:
             CAPEX:
               type: number
+              description: "Upfront cost in EUR/MW."
             OPEX:
               type: number
+              description: "Fixed operational cost in EUR/MW."
             WACC:
               type: number
+              description: "Weighted average cost of capital."
           required: ["CAPEX", "OPEX", "WACC"]
           additionalProperties: false
       required: ["initial_area", "continuous_layers", "binary_layers"]

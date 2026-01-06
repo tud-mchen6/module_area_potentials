@@ -15,7 +15,7 @@ techs:
       settlement_share:
         min: 0.01
         max: 1
-        share: 0.8
+        share: 0.25
     binary_layers:
       regions_maritime: 0
       regions_land: 1
@@ -24,15 +24,18 @@ techs:
       landcover_FARM: 1
       landcover_FOREST: 1
       landcover_URBAN: 1
-      landcover_OTHER: 1
+      landcover_GRASS: 1
+      landcover_SHRUB: 1
+      landcover_BARE: 1
       landcover_NOT_SUITABLE: 0
       landcover_WATER: 0
-    density: 5
-    lifetime: 20
-    costs: # TODO: this needs to be country-specific
-      CAPEX: 505000
-      OPEX: 7900
-      WACC: 0.04
+    density: 50 # Usual values for open-field PV; Denholm and Margolis (2008) suggests 110
+    lifetime: 30
+    # TODO: this may need to be country-specific
+    costs: 
+      CAPEX: 705000 # Average of DEA Rooftop PV residential and comm.&industrial
+      OPEX: 9800
+      WACC: 0.05
       # TODO: the current OPEX is FOM, need to add variable OM?
   pv_open_field:
     initial_area: pixel_area

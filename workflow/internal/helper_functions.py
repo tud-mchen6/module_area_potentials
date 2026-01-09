@@ -6,7 +6,7 @@ from typing import Dict, List, Optional, Tuple
 
 
 # Original author: Copilot
-def allocate_with_sharing(ds,
+def allocate_with_sharing_old(ds,
                           share,
                           area_var='area',
                           prod_var='prod',
@@ -66,7 +66,7 @@ def allocate_with_sharing(ds,
 
     # Case A: a2' <= area_low
     # For s < 1: capA = (pixel_area - area_low) / (1 - s)
-    # For s = 1: feasible capA is area_low if area_low <= pixel_area
+    # For s = 1: feasible capA is area_low
     denom = (1.0 - s)
     capA = xr.where(denom > 0,
                     (pixel_area - area_low) / denom,
@@ -114,6 +114,111 @@ def allocate_with_sharing(ds,
     ds_out[area_var] = area_updated
     ds_out[prod_var] = prod_updated
     ds_out['overlap'] = overlap  # dims (y,x)
+
+    return ds_out
+
+
+
+
+def policy_one_pixel(share, lcoe_1d, prod_1d, area_1d, pixel_area):
+    """
+    Inputs are 1-D arrays for a single pixel, each length = number of techs.
+    lcoe_1d: float array (NaN allowed)
+    prod_1d: float array (NaN indicates not present), total yearly production of the tech
+    area_1d: float array (NaN indicates not present), estimated used area of the tech
+    pixel_1d: float array (NaN indicates not present), total area of the given pixel
+
+    Return two 1-D arrays: updated prod and area (same length).
+    """
+
+    # Situation 1: less than two techs are present in one pixel
+    present = np.isfinite(prod_1d) | np.isfinite(area_1d)
+    if present.sum() <= 1:
+        # Single or none present: leave unchanged
+        overlap = 0
+        return prod_1d, area_1d, overlap
+
+    # Situation 2: two techs are present in one pixel, need to 
+    # decide for the output
+    # Situation 2.1: no sharing. Zero-out non-winners and keep the lowest LCOE
+    if share < 0:
+        k = np.argmin(lcoe_1d)
+        prod_out = np.zeros_like(prod_1d)
+        area_out = np.zeros_like(area_1d)
+        prod_out[k] = prod_1d[k]
+        area_out[k] = area_1d[k]
+        overlap = 0
+        return prod_out, area_out, overlap
+    # Situation 2.2: sharing allowed, 0 <= share <= 1
+    else:
+        idx_sorted = np.argsort(lcoe_1d)
+        k1 = idx_sorted[0]  # index of lowest LCOE
+        k2 = idx_sorted[1]  # index of second-lowest LCOE
+        area1 = area_1d[k1]
+        area2 = area_1d[k2]
+        prod2 = prod_1d[k2]
+
+        s = np.clip(share, 0.0, 1.0)
+
+        # Compute cap for area2
+        # Case A: a2' < area1
+        denom = (1.0 - s)
+        if denom > 0:
+            capA = (pixel_area - area1) / denom
+        else:
+            capA = area1
+        capA = max(0.0, min(capA, area1))
+        # Case B: a2' >= area1
+        capB = max(area1, pixel_area - (1.0 - s) * area1)
+
+        # Determine cap
+        cap = capB if capB >= area1 else capA
+        # Assign new area2
+        new_area2 = min(area2, cap)
+        # Compute overlap area between two techs
+        overlap = s * min(area1, new_area2)
+
+        if area2 > 0:
+            scale = new_area2 / area2
+        else:
+            scale = 0.0
+        updated_prod2 = prod2 * scale
+
+        # Build output arrays
+        prod_out = prod_1d.copy()
+        area_out = area_1d.copy()
+        prod_out[k2] = updated_prod2
+        area_out[k2] = new_area2
+
+        return prod_out, area_out, overlap
+
+
+
+def allocate_with_sharing(ds: xr.Dataset,
+                          share: float,) -> xr.Dataset:
+    """
+    Adjusts the area/prod of the second-cheapest technology per pixel according to a 'share' factor
+    and adds an (y,x) 'overlap' variable for the shared area.
+    share semantics:
+      -1 : only cheapest tech allowed (second tech area -> 0)
+       0 : no sharing; curb second tech so area_low + area_second <= pixel_area
+        0..1: partial/full sharing; allows s * min(area_low, area_second) to overlap
+    """
+    
+    ds = ds.chunk({'tech': -1})
+
+    prod_updated, area_updated, overlap = xr.apply_ufunc(
+        policy_one_pixel,
+        share, ds['lcoe'], ds['prod'], ds['area'], ds['pixel_area'],
+        input_core_dims=[[],['tech'], ['tech'], ['tech'], []],  # we operate along tech per pixel
+        output_core_dims=[['tech'], ['tech'], []],           # return arrays along tech
+        vectorize=True,                                  # broadcast across (x,y)
+        dask='parallelized',
+        output_dtypes=[ds['prod'].dtype, ds['area'].dtype, ds['area'].dtype],
+        output_sizes={'tech': ds.sizes['tech']},
+    )
+
+    ds_out = ds.assign(prod=prod_updated, area=area_updated, overlap=overlap)
 
     return ds_out
 

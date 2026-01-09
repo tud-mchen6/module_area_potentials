@@ -29,29 +29,70 @@ def land_share_calculation(
     
     # wind offshore will not have land issues, therefore will only appear in
     # cost curves
-    
-    # read data from all technology Datasets
-    datasets = []
-    for item in inputs:
-        # rooftop PV is not part of the game, will not appear anywhere
-        if 'rooftop' in item:
-            continue
-        ds = xr.open_dataset(item)
-        datasets.append(ds)
-    combined = xr.concat(datasets, dim="tech")
-    # get the area per pixel to prepare for the land overlap calculation
-    resampled = xr.open_dataset(resampled_input)
-    pixel_area = resampled.pixel_area
-    ds_combined = combined.assign(pixel_area=pixel_area)
-    
+
+
+    # # assigned land share type between technologies. If valued -1, then one
+    # # pixel can only be used for exclusively one technology.
+    # if not land_share_type:
+    #     land_share_type = -1
+    # # read data from all technology Datasets
+    # datasets = []
+    # for item in inputs:
+    #     # rooftop PV is not part of the game, will not appear anywhere
+    #     if 'rooftop' in item:
+    #         continue
+    #     ds = xr.open_dataset(item)
+    #     datasets.append(ds)
+    # combined = xr.concat(datasets, dim="tech")
+    # # get the area per pixel to prepare for the land overlap calculation
+    # resampled = xr.open_dataset(resampled_input)
+    # pixel_area = resampled.pixel_area
+    # ds_combined = combined.assign(pixel_area=pixel_area)
+    # ds_land_processed = allocate_with_sharing_old(ds_combined, land_share_type)
+    # ds_land_processed.to_netcdf(output_path)
+
+
+
+
+
+
+
     # assigned land share type between technologies. If valued -1, then one
     # pixel can only be used for exclusively one technology.
     if not land_share_type:
         land_share_type = -1
 
+    # Filter out rooftop PV as it doesn't have land use issues
+    # and is not used as power plants
+    tech_files = [p for p in inputs if "rooftop" not in p]
+
+    # Open all files lazily, concatenate along 'tech'
+    # Used to increase speed and reduce memory usage
+    combined = xr.open_mfdataset(
+        tech_files,
+        chunks={"y": 512, "x": 512}, # heuristic chunk size
+        combine="nested",
+        concat_dim="tech",
+        parallel=True
+    )
+
+    # Add pixel_area to prepare for land area sharing calculation
+    resampled = xr.open_dataset(resampled_input, chunks={"y": 512, "x": 512})
+    ds_combined = combined.assign(pixel_area=resampled["pixel_area"].chunk({"y": 512, "x": 512}))
+
     ds_land_processed = allocate_with_sharing(ds_combined, land_share_type)
 
-    ds_land_processed.to_netcdf(output_path)
+    # Choose output chunking
+    ds_to_write = ds_land_processed.chunk({'tech': -1, 'x': 512, 'y': 512})
+
+    encoding = {
+        'lcoe': {'zlib': True, 'complevel': 4},
+        'prod': {'zlib': True, 'complevel': 4},
+        'area': {'zlib': True, 'complevel': 4},
+    }
+
+    ds_to_write.to_netcdf(output_path, encoding=encoding)
+
 
 
 

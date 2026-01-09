@@ -18,6 +18,7 @@ from _script_utils import plot_with_zero_separate
 @click.argument("output_path", type=str)
 @click.argument("plot_path", type=str)
 @click.option("--override_config", type=str)
+@click.option("--min_protected_share", type=float)
 def get_area_potential(
     shapes_path,
     resampled_path,
@@ -26,6 +27,7 @@ def get_area_potential(
     output_path,
     plot_path,
     override_config,
+    min_protected_share,
 ):
     """Calculate the area potential based on the provided configuration.
 
@@ -56,15 +58,6 @@ def get_area_potential(
     # Start with the configured pixel area as a base
     potential_da = ds[config["initial_area"]].squeeze(drop=True)  # Drop `band`
 
-    # Zero out pixels from binary layers with share 0 from potential_da
-    binary_layers = config.get("binary_layers", {})
-    zero_binary_layers = [layer for layer, value in binary_layers.items() if value == 0]
-    for layer in zero_binary_layers:
-        if layer in ds:
-            potential_da = potential_da.where(~(ds[layer] > 0), other=0)
-        else:
-            print(f"Warning: Layer '{layer}' not found in dataset. Skipping.")
-
     # Apply the continuous_layers criteria to zero out additional pixels
     continuous_layers = config.get("continuous_layers", {})
     for layer, layer_config in continuous_layers.items():
@@ -77,6 +70,40 @@ def get_area_potential(
             # If a share is defined, multiply the pixel area by the share
             if "share" in layer_config:
                 potential_da = potential_da * layer_config["share"]
+        else:
+            print(f"Warning: Layer '{layer}' not found in dataset. Skipping.")
+
+    # Add feature of min protected area as share of total territory
+    # If necessary, adjust land use factors to reach the minimum protected share
+    if min_protected_share is not None:
+        protected_share = ds['protected'].sum() / ds['pixel_area'].sum()
+        if protected_share < min_protected_share:
+            # incrementally decrease the land use factor for forest, shrub, grass, farm, bare to reach the min protected share
+            print(f"Protected share {protected_share.values} is less than minimum {min_protected_share}, adjusting land use factors.")
+            binary_layers = config.get("binary_layers", {})
+            priority = ['FOREST', 'SHRUB', 'GRASS', 'FARM', 'BARE']
+            land_use_types = [k for k in binary_layers.keys() if any(n in k for n in priority)]
+            land_use_types = sorted(land_use_types, key=lambda x: priority.index(next(n for n in priority if n in x)))
+            increased_protected = 0
+            for land_use_type in land_use_types:
+                breakpoint()
+                if float(binary_layers[land_use_type]) == 0:
+                    continue
+                type_total_area = (ds[land_use_type] * potential_da).sum()
+                if (increased_protected + binary_layers[land_use_type] * type_total_area + ds['protected'].sum()) / ds['pixel_area'].sum() >= min_protected_share:
+                    binary_layers[land_use_type] = binary_layers[land_use_type] - (min_protected_share * ds['pixel_area'].sum() - ds['protected'].sum() - increased_protected) / type_total_area
+                    break
+                else:
+                    increased_protected += binary_layers[land_use_type] * type_total_area
+                    binary_layers[land_use_type] = 0
+                    continue
+
+
+    # Zero out pixels from binary layers with share 0 from potential_da
+    zero_binary_layers = [layer for layer, value in binary_layers.items() if value == 0]
+    for layer in zero_binary_layers:
+        if layer in ds:
+            potential_da = potential_da.where(~(ds[layer] > 0), other=0)
         else:
             print(f"Warning: Layer '{layer}' not found in dataset. Skipping.")
 

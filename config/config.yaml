@@ -127,3 +127,5 @@ overrides:
 # land_cost_curve_tech: wind_onshore
 
 land_share_type: -1
+
+min_protected_share: 0.00056922

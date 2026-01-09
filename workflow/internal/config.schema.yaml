@@ -78,3 +78,6 @@ properties:
   
   land_share_type:
     type: number
+
+  min_protected_share:
+    type: number

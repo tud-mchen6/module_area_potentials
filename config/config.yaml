@@ -30,17 +30,16 @@ techs:
       landcover_NOT_SUITABLE: 0
       landcover_WATER: 0
     density: 50 # Usual values for open-field PV; Denholm and Margolis (2008) suggests 110
-    lifetime: 30
+    lifetime: 40 # TODO: subject to change if more numbers are found
     # TODO: this may need to be country-specific
-    costs: 
-      CAPEX: 705000 # Average of DEA Rooftop PV residential and comm.&industrial
+    costs: # Average of DEA Rooftop PV residential and comm.&industrial
+      CAPEX: 705000 
       OPEX: 9800
       WACC: 0.05
-      # TODO: the current OPEX is FOM, need to add variable OM?
   pv_open_field:
     initial_area: pixel_area
     continuous_layers:
-      slope:
+      slope: # Unit: degree
         min: 0
         max: 3
       settlement_share:
@@ -53,21 +52,23 @@ techs:
       landcover_FARM: 0.1
       landcover_FOREST: 0
       landcover_URBAN: 0
-      landcover_OTHER: 0.2
+      landcover_GRASS: 0.05
+      landcover_SHRUB: 0.02
+      landcover_BARE: 0.1
       landcover_NOT_SUITABLE: 0
       landcover_WATER: 0
-    density: 10
-    lifetime: 20
+    density: 45
+    lifetime: 40
     costs: # TODO: this needs to be country-specific
-      CAPEX: 240000
-      OPEX: 5000
-      WACC: 0.08
+      CAPEX: 380000
+      OPEX: 9500
+      WACC: 0.04
   wind_onshore:
     initial_area: pixel_area
     continuous_layers:
       slope:
         min: 0
-        max: 20
+        max: 15
       settlement_share:
         min: 0
         max: 0.01
@@ -75,25 +76,27 @@ techs:
       regions_maritime: 0
       regions_land: 1
       protected: 0
-      landcover_FARM: 0.2
+      landcover_FARM: 0.4
       landcover_FOREST: 0.05
       landcover_URBAN: 0
-      landcover_OTHER: 0.3
+      landcover_GRASS: 0.5
+      landcover_SHRUB: 0.3
+      landcover_BARE: 0.7
       landcover_NOT_SUITABLE: 0
       landcover_WATER: 0
     density: 5
     lifetime: 30
     costs: # TODO: this needs to be country-specific
-      CAPEX: 960000
-      OPEX: 11340
-      WACC: 0.08
+      CAPEX: 1146644
+      OPEX: 16663
+      WACC: 0.04
   wind_offshore:
     initial_area: pixel_area
     continuous_layers:
       bathymetry:
         min: -50
         max: 0
-        share: 0.8
+        share: 0.4
     binary_layers:
       regions_land: 0
       regions_maritime: 1
@@ -103,9 +106,9 @@ techs:
     density: 15
     lifetime: 30
     costs: # TODO: this needs to be country-specific
-      CAPEX: 1680000
-      OPEX: 32493
-      WACC: 0.1
+      CAPEX: 2248224
+      OPEX: 32000
+      WACC: 0.05
 
 # Optional: override settings for specific subunits (countries, regions, etc.)
 # This allows you to set specific parameters that differ from the defaults,
@@ -121,6 +124,6 @@ overrides:
       shapes_buffer:
         land: 22000  # 22 km = 12 nautical miles
 
-land_cost_curve_tech: wind_onshore
+# land_cost_curve_tech: wind_onshore
 
-land_share_type: 0.5
+land_share_type: -1

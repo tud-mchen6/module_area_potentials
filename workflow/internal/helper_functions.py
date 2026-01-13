@@ -132,7 +132,7 @@ def policy_one_pixel(share, lcoe_1d, prod_1d, area_1d, pixel_area):
     """
 
     # Situation 1: less than two techs are present in one pixel
-    present = np.isfinite(prod_1d) | np.isfinite(area_1d)
+    present = np.isfinite(prod_1d)
     if present.sum() <= 1:
         # Single or none present: leave unchanged
         overlap = 0
@@ -142,7 +142,9 @@ def policy_one_pixel(share, lcoe_1d, prod_1d, area_1d, pixel_area):
     # decide for the output
     # Situation 2.1: no sharing. Zero-out non-winners and keep the lowest LCOE
     if share < 0:
-        k = np.argmin(lcoe_1d)
+        # set NaN to inf to avoid issues with argmin
+        lcoe_assess = np.where(np.isnan(lcoe_1d), np.inf, lcoe_1d)
+        k = np.argmin(lcoe_assess)
         prod_out = np.zeros_like(prod_1d)
         area_out = np.zeros_like(area_1d)
         prod_out[k] = prod_1d[k]
@@ -522,10 +524,10 @@ def plot_supply_curve_bars(
                 tname = tech_names[tid] if tid is not None else None
                 color = cmap.get(tname, "#7f7f7f")
                 plt.bar(l, h, width=w, align="edge", color=color, edgecolor="none", rasterized=rasterized)
-            breakpoint()
+            cmap_renamed = cmap.copy()
             for tname, color in cmap.items():
-                cmap[TECH_NAME_DICT[tname]] = cmap.pop(tname)
-            legend_items = list(cmap.items())
+                cmap_renamed[TECH_NAME_DICT[tname]] = cmap_renamed.pop(tname)
+            legend_items = list(cmap_renamed.items())
             
     else:
         # Draw per-tech vectorized bars
@@ -539,7 +541,6 @@ def plot_supply_curve_bars(
             T = len(tech_names)
             for t in range(T):
                 # NEEDAUNDERSTAND: what is this m? Is it a mask (an array of booleans)?
-                breakpoint()
                 m = (tech_sorted_id == t)
                 if not np.any(m):
                     continue

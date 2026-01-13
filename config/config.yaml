@@ -103,7 +103,7 @@ techs:
       protected: 0
     shapes_buffer:
       land: 15000  # meters
-    density: 15
+    density: 5
     lifetime: 30
     costs: # TODO: this needs to be country-specific
       CAPEX: 2248224
@@ -128,4 +128,4 @@ overrides:
 
 land_share_type: -1
 
-min_protected_share: 0.00056922
+# min_protected_share: 0.00056922

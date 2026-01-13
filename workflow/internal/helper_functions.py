@@ -427,14 +427,21 @@ def plot_supply_curve_line(prep: Dict[str, np.ndarray],
     x, y, x_label = build_supply_curve_line(prep)
     plt.figure(figsize=(9, 6), dpi=120)
     plt.plot(x, y, color="#1f77b4", lw=1.5)
-    plt.xlabel(x_label)
-    plt.ylabel("LCOE (€/MWh)")
+    plt.xlabel(x_label, fontsize=16)
+    plt.ylabel("LCOE (€/MWh)", fontsize=16)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
     plt.title(title)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(output_path, format='png')
 
-
+TECH_NAME_DICT = {
+    "pv_open_field": "Open Field PV",
+    "pv_rooftop": "Rooftop PV",
+    "wind_onshore": "Onshore Wind",
+    "wind_offshore": "Offshore Wind",
+}
 
 def plot_supply_curve_bars(
     prep: Dict[str, np.ndarray],
@@ -515,7 +522,11 @@ def plot_supply_curve_bars(
                 tname = tech_names[tid] if tid is not None else None
                 color = cmap.get(tname, "#7f7f7f")
                 plt.bar(l, h, width=w, align="edge", color=color, edgecolor="none", rasterized=rasterized)
+            breakpoint()
+            for tname, color in cmap.items():
+                cmap[TECH_NAME_DICT[tname]] = cmap.pop(tname)
             legend_items = list(cmap.items())
+            
     else:
         # Draw per-tech vectorized bars
         if tech_sorted_id is None:
@@ -527,7 +538,6 @@ def plot_supply_curve_bars(
             legend_items = []
             T = len(tech_names)
             for t in range(T):
-                breakpoint()
                 # NEEDAUNDERSTAND: what is this m? Is it a mask (an array of booleans)?
                 breakpoint()
                 m = (tech_sorted_id == t)
@@ -536,18 +546,20 @@ def plot_supply_curve_bars(
                 color = cmap.get(tech_names[t], "#7f7f7f")
                 plt.bar(x_left[m], lcoe_sorted[m], width=x_width[m], align="edge",
                         color=color, edgecolor="none", rasterized=rasterized)
-                legend_items.append((tech_names[t], color))
+                legend_items.append((TECH_NAME_DICT[tech_names[t]], color))
 
-    plt.xlabel(x_label)
-    plt.ylabel("LCOE (€/MWh)")
-    plt.title(title)
+    plt.xlabel(x_label, fontsize=16)
+    plt.ylabel("LCOE (€/MWh)", fontsize=16)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    # plt.title(title)
     plt.grid(True, axis="y", alpha=0.3)
 
     # Legend
     from matplotlib.patches import Patch
     handles = [Patch(color=c, label=lab) for lab, c in legend_items]
     if handles:
-        plt.legend(handles=handles, title="Technology", frameon=True)
+        plt.legend(handles=handles, title="Technology", frameon=True, fontsize=14, title_fontsize=14)
 
     plt.tight_layout()
     plt.savefig(output_path, format='png')
@@ -649,11 +661,13 @@ def plot_land_use_curve_line(
     
 ):
     """Plots the land-use curve as a line (piecewise linear)."""
-    plt.figure(figsize=(10, 6), dpi=120)
+    plt.figure(figsize=(11, 6), dpi=120)
     plt.plot(x_points, y_points, color="#2ca02c", lw=1.5)
-    plt.xlabel(x_label)
-    plt.ylabel(area_label)
-    plt.title(title)
+    plt.xlabel(x_label, fontsize=16)
+    plt.ylabel(area_label, fontsize=16)
+    plt.xticks(fontsize=14)
+    plt.yticks(fontsize=14)
+    # plt.title(title)
     plt.grid(True, alpha=0.3)
     plt.tight_layout()
     plt.savefig(output_path, format='png')

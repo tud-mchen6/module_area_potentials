@@ -75,7 +75,7 @@ def get_area_potential(
 
     # Add feature of min protected area as share of total territory
     # If necessary, adjust land use factors to reach the minimum protected share
-    if min_protected_share is not None:
+    if min_protected_share > 0:
         protected_share = ds['protected'].sum() / ds['pixel_area'].sum()
         if protected_share < min_protected_share:
             # incrementally decrease the land use factor for forest, shrub, grass, farm, bare to reach the min protected share
@@ -100,6 +100,7 @@ def get_area_potential(
 
 
     # Zero out pixels from binary layers with share 0 from potential_da
+    binary_layers = config.get("binary_layers", {})
     zero_binary_layers = [layer for layer, value in binary_layers.items() if value == 0]
     for layer in zero_binary_layers:
         if layer in ds:

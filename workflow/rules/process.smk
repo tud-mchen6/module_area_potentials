@@ -64,7 +64,7 @@ rule area_potential:
         .get(wildcards.subunit, {})
         .get(wildcards.tech, {}),
         buffer_crs=lambda wildcards: config["buffer_crs"],
-        min_protected_share=lambda wildcards: config.get("min_protected_share", None),
+        min_protected_share=lambda wildcards: config.get("min_protected_share", 0),
     input:
         script=workflow.source_path("../scripts/area_potential.py"),
         shapes=rules.breakup_shape.output,

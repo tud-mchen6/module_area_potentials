@@ -120,6 +120,82 @@ def allocate_with_sharing_old(ds,
 
 
 
+
+
+import numpy as np
+import xarray as xr
+
+def allocate_with_sharing_vectorized(ds: xr.Dataset, share: float) -> xr.Dataset:
+    """
+    Vectorized allocation with sharing (Dask-lazy).
+    - If fewer than two techs are present in a pixel, leave it unchanged.
+    - share < 0: only cheapest tech survives (others present -> 0).
+    - 0 <= share <= 1: allow overlap = share * min(area_lowest, area_second),
+      and curb the second-cheapest tech accordingly.
+    """
+    lcoe, prod, area, pixel_area = ds['lcoe'], ds['prod'], ds['area'], ds['pixel_area']
+
+    # Present mask and count per pixel
+    present = np.isfinite(prod)
+    two_present = present.sum('tech') >= 2
+
+    # Effective LCOE for ranking (absent or invalid -> +inf)
+    lcoe_eff = xr.where(present, lcoe, np.inf)
+
+    # Cheapest index
+    k1 = lcoe_eff.argmin('tech')
+
+    # Mask out cheapest to get second-cheapest
+    tech_pos = xr.DataArray(np.arange(ds.sizes['tech']), dims='tech', coords={'tech': ds['tech']})
+    lcoe_eff2 = xr.where(tech_pos == k1, np.inf, lcoe_eff)
+    k2 = lcoe_eff2.argmin('tech')
+
+    # Build masks for selective updates
+    mask_k1 = (tech_pos == k1) & two_present
+    mask_k2 = (tech_pos == k2) & two_present
+
+    # Gather values for cheapest and second-cheapest (vectorized indexing)
+    area1 = xr.where(mask_k1, area, 0).max('tech')
+    area2 = xr.where(mask_k2, area, 0).max('tech')
+    prod2 = xr.where(mask_k2, prod, 0).max('tech')
+
+    if share < 0:
+        # Winner-takes-all: zero other present techs, keep NaNs for absent, leave single-tech pixels unchanged
+        prod_updated = xr.where(two_present & ~mask_k1, 0, prod)
+        area_updated = xr.where(two_present & ~mask_k1, 0, area)
+        overlap = xr.zeros_like(pixel_area)
+    else:
+        # Sharing branch (0 <= share <= 1)
+        s = float(np.clip(share, 0.0, 1.0))
+        denom = 1.0 - s
+        # capA: when a2' < area1 (only relevant if denom > 0)
+        capA = ((pixel_area - area1) / denom) if denom > 0 else area1
+        capA = capA.clip(0.0, area1)
+        # capB: when a2' >= area1
+        capB = xr.apply_ufunc(np.maximum, area1, pixel_area - (1.0 - s) * area1)
+        # Choose cap (capB is always >= area1 by construction)
+        cap = xr.where(capB >= area1, capB, capA)
+
+        new_area2 = xr.apply_ufunc(np.minimum, area2, cap)
+        overlap = s * xr.apply_ufunc(np.minimum, area1, new_area2)
+
+        # Scale production of second-cheapest tech
+        scale = xr.where(area2 > 0, new_area2 / area2, 0.0)
+        updated_prod2 = prod2 * scale
+
+        # Update only the second-cheapest tech where two techs are present
+        prod_updated = xr.where(mask_k2, updated_prod2, prod)
+        area_updated = xr.where(mask_k2, new_area2, area)
+
+        # No overlap where fewer than two are present
+        overlap = xr.where(two_present, overlap, 0)
+
+    return ds.assign(prod=prod_updated, area=area_updated, overlap=overlap)
+
+
+
+
+
 def policy_one_pixel(share, lcoe_1d, prod_1d, area_1d, pixel_area):
     """
     Inputs are 1-D arrays for a single pixel, each length = number of techs.

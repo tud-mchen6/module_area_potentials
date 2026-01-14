@@ -79,14 +79,18 @@ def land_share_calculation(
     # Add pixel_area to prepare for land area sharing calculation
     resampled = xr.open_dataset(resampled_input, chunks={"y": 512, "x": 512})
     ds_combined = combined.assign(pixel_area=resampled["pixel_area"].chunk({"y": 512, "x": 512}))
+    
+    ds_combined = ds_combined.transpose('y', 'x', 'tech')
+    ds_combined = ds_combined.chunk({'y': 512, 'x': 512, 'tech': -1})
+    # ds_to_write = allocate_with_sharing(ds_combined, land_share_type)
 
-    ds_land_processed = allocate_with_sharing(ds_combined, land_share_type)
-
+    ds_to_write = allocate_with_sharing_vectorized(ds_combined, land_share_type)
+    ds_to_write = ds_to_write.unify_chunks()
     # Choose output chunking
-    ds_to_write = ds_land_processed.chunk({'tech': -1, 'x': 512, 'y': 512})
+    # ds_to_write = ds_land_processed.chunk({'tech': -1, 'x': 512, 'y': 512})
 
     # TEMPORARY TO TEST SPEED
-    ds_to_write = ds_to_write.astype({v: 'float32' for v in ds_to_write.data_vars})
+    # ds_to_write = ds_to_write.astype({v: 'float32' for v in ds_to_write.data_vars})
 
     # encoding = {
     #     'lcoe': {'zlib': True, 'complevel': 1},
@@ -97,9 +101,9 @@ def land_share_calculation(
     print("is dask-backed:", any(hasattr(ds_to_write[v].data, "chunks") for v in ds_to_write.data_vars))
     print("approx GB:", ds_to_write.nbytes / 1e9)
     print("dask chunks:", ds_to_write.chunks)  # if dask-backed
-    # breakpoint()
+    
     ds_materialised = ds_to_write.compute()
-
+    
     # ds_materialised.to_netcdf(output_path, encoding=encoding, engine='netcdf4')
 
     # Flatten the dataset and save to output
@@ -108,13 +112,7 @@ def land_share_calculation(
     # x_points, y_points, x_label = build_land_use_curve_points(
     #     ds_materialised,
     #     prep)
-    np.savez_compressed(output_path, **prep,
-                        # lcoe=prep['lcoe'],
-                        # prod=prep['prod'],
-                        # tech=prep['tech'],
-                        # area=prep['area'],
-                        # overlap=prep['overlap'],
-                        )
+    np.savez_compressed(output_path, **prep,)
 
 
 

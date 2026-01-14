@@ -78,13 +78,10 @@ def land_share_calculation(
 
     # Add pixel_area to prepare for land area sharing calculation
     resampled = xr.open_dataset(resampled_input, chunks={"y": 512, "x": 512})
-    ds_combined = combined.assign(pixel_area=resampled["pixel_area"].chunk({"y": 512, "x": 512}))
-    
+    ds_combined = combined.assign(pixel_area=resampled["pixel_area"])
     ds_combined = ds_combined.transpose('y', 'x', 'tech')
-    ds_combined = ds_combined.chunk({'y': 512, 'x': 512, 'tech': -1})
 
     ds_to_write = allocate_with_sharing_vectorized(ds_combined, land_share_type)
-    ds_to_write = ds_to_write.unify_chunks()
 
     print("approx GB:", ds_to_write.nbytes / 1e9)
     print("dask chunks:", ds_to_write.chunks)  # if dask-backed

@@ -85,16 +85,36 @@ def land_share_calculation(
     # Choose output chunking
     ds_to_write = ds_land_processed.chunk({'tech': -1, 'x': 512, 'y': 512})
 
-    encoding = {
-        'lcoe': {'zlib': True, 'complevel': 4},
-        'prod': {'zlib': True, 'complevel': 4},
-        'area': {'zlib': True, 'complevel': 4},
-    }
+    # TEMPORARY TO TEST SPEED
+    ds_to_write = ds_to_write.astype({v: 'float32' for v in ds_to_write.data_vars})
 
-    ds_to_write.to_netcdf(output_path, encoding=encoding)
+    # encoding = {
+    #     'lcoe': {'zlib': True, 'complevel': 1},
+    #     'prod': {'zlib': True, 'complevel': 1},
+    #     'area': {'zlib': True, 'complevel': 1},
+    # }
 
+    print("is dask-backed:", any(hasattr(ds_to_write[v].data, "chunks") for v in ds_to_write.data_vars))
+    print("approx GB:", ds_to_write.nbytes / 1e9)
+    print("dask chunks:", ds_to_write.chunks)  # if dask-backed
+    # breakpoint()
+    ds_materialised = ds_to_write.compute()
 
+    # ds_materialised.to_netcdf(output_path, encoding=encoding, engine='netcdf4')
 
+    # Flatten the dataset and save to output
+    prep = prepare_global_order(ds_materialised)
+
+    # x_points, y_points, x_label = build_land_use_curve_points(
+    #     ds_materialised,
+    #     prep)
+    np.savez_compressed(output_path, **prep,
+                        # lcoe=prep['lcoe'],
+                        # prod=prep['prod'],
+                        # tech=prep['tech'],
+                        # area=prep['area'],
+                        # overlap=prep['overlap'],
+                        )
 
 
 
@@ -104,5 +124,5 @@ if __name__ == "__main__":
         inputs=snakemake.input.inputs,
         resampled_input=snakemake.input.resampled_input,
         land_share_type=snakemake.params.land_share_type,
-        output_path=snakemake.output.curve_data,
+        output_path=snakemake.output.prep,
     )

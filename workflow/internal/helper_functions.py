@@ -240,9 +240,6 @@ TECH_COORD = "tech"        # name of technology coordinate (string labels)
 PROD_TO_TWH = True
 PROD_DIVISOR = 1e6  # MWh -> TWh
 
-# Filtering
-REQUIRE_POSITIVE_PROD = True
-
 # Technology colors
 TECH_COLORS = {
     "pv_open_field": "#FFD700",          # yellow
@@ -253,7 +250,7 @@ FALLBACK_COLORS = ["#999999", "#2ca02c", "#d62728", "#9467bd",
                    "#8c564b", "#e377c2", "#7f7f7f", "#bcbd22", "#17becf"]
 
 
-
+# Maybe to trim down
 def _detect_tech(ds: xr.Dataset, tech_dim: str, tech_coord: str) -> Tuple[bool, Optional[List[str]]]:
     """Detects if dataset has a tech dimension+coord. Returns (has_tech, tech_names_or_None)."""
     has_dim = tech_dim in ds.dims
@@ -263,7 +260,7 @@ def _detect_tech(ds: xr.Dataset, tech_dim: str, tech_coord: str) -> Tuple[bool, 
         return True, tech_names
     return False, None
 
-
+# Maybe to trim down
 def _flatten_for_sort(
     ds: xr.Dataset,
     lcoe_var: str,
@@ -301,7 +298,7 @@ def _flatten_for_sort(
 
     return lcoe_flat, prod_flat, tech_id
 
-
+# Maybe to trim down
 def _flatten_aux_var(
     ds: xr.Dataset,
     var_name: str,
@@ -347,7 +344,6 @@ def prepare_global_order(
     prod_var: str = PROD_VAR,
     tech_dim: str = TECH_DIM,
     tech_coord: str = TECH_COORD,
-    require_positive_prod: bool = REQUIRE_POSITIVE_PROD
 ) -> Dict[str, np.ndarray]:
     """
     Computes a global LCOE order and returns a dictionary with:
@@ -364,9 +360,6 @@ def prepare_global_order(
     lcoe, prod, tech_id = _flatten_for_sort(ds, lcoe_var, prod_var, tech_names)
 
     mask = np.isfinite(lcoe) & np.isfinite(prod)
-    if require_positive_prod:
-        mask &= (prod > 0)
-
     l_m = lcoe[mask]
     p_m = prod[mask]
     t_m = tech_id[mask] if tech_id is not None else None

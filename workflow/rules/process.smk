@@ -141,9 +141,10 @@ rule plot_supply_and_land_curves:
         Plot the supply cost curve and land use curve for the given shape and subunit.
         """
     input:
-        synth_ds=rules.land_share.output,
+        # synth_ds=rules.land_share.output,
+        synth_dict=rules.land_share.output.prep,
     params:
-        single_tech=config.get("land_cost_curve_tech", {}),
+        # single_tech=config.get("land_cost_curve_tech", {}),
     output:
         supply_curve_path="results/{shape}/{subunit}/supply_curve_{shape}_{subunit}.png",
         land_curve_path="results/{shape}/{subunit}/land_curve_{shape}_{subunit}.png",

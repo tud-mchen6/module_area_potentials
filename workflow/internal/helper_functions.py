@@ -336,11 +336,13 @@ def _detect_tech(ds: xr.Dataset, tech_dim: str, tech_coord: str) -> Tuple[bool, 
         return True, tech_names
     return False, None
 
-# Maybe to trim down
+# TODO: really verbose, try to trim down
 def _flatten_for_sort(
     ds: xr.Dataset,
     lcoe_var: str,
     prod_var: str,
+    area_var: str,
+    overlap_var: str,
     tech_names: Optional[List[str]]
 ) -> Tuple[np.ndarray, np.ndarray, Optional[np.ndarray]]:
     """
@@ -348,15 +350,16 @@ def _flatten_for_sort(
     If multi-tech, tech axis is moved to last, then raveled.
     Returns: (lcoe_flat, prod_flat, tech_id_or_None)
     """
-    lvar = ds[lcoe_var].astype(np.float32)
-    pvar = ds[prod_var].astype(np.float32)
-
-    if set(lvar.dims) != set(pvar.dims):
-        raise ValueError(f"'{lcoe_var}' and '{prod_var}' must share the same dims. Got {lvar.dims} vs {pvar.dims}")
+    lvar = ds[lcoe_var]
+    pvar = ds[prod_var]
+    avar = ds[area_var]
+    ovar = ds[overlap_var]
 
     if tech_names is None:
         lcoe_flat = lvar.values.ravel()
         prod_flat = pvar.values.ravel()
+        area_flat = avar.values.ravel()
+        overlap_flat = ovar.values.ravel()
         tech_id = None
     else:
         dims = list(lvar.dims)
@@ -364,15 +367,18 @@ def _flatten_for_sort(
         transpose_order = [d for d in dims if d != TECH_DIM] + [TECH_DIM]
         larr = lvar.transpose(*transpose_order).values
         parr = pvar.transpose(*transpose_order).values
+        aarr = avar.transpose(*transpose_order).values
         T = len(tech_names)
         non_tech_size = larr.size // T
 
         lcoe_flat = larr.reshape(-1)
         prod_flat = parr.reshape(-1)
+        area_flat = aarr.reshape(-1)
+        overlap_flat = ovar.values.ravel()
         # For each (y,x,...) position, we have T consecutive tech entries
         tech_id = np.tile(np.arange(T, dtype=np.uint16), non_tech_size)
 
-    return lcoe_flat, prod_flat, tech_id
+    return lcoe_flat, prod_flat, area_flat, overlap_flat, tech_id
 
 # Maybe to trim down
 def _flatten_aux_var(
@@ -418,13 +424,17 @@ def prepare_global_order(
     ds: xr.Dataset,
     lcoe_var: str = LCOE_VAR,
     prod_var: str = PROD_VAR,
+    area_var: str = AREA_VAR,
+    overlap_var: str = OVERLAP_VAR,
     tech_dim: str = TECH_DIM,
     tech_coord: str = TECH_COORD,
 ) -> Dict[str, np.ndarray]:
     """
     Computes a global LCOE order and returns a dictionary with:
-      - 'lcoe_sorted'      : (N,) float32
-      - 'prod_sorted'      : (N,) float32
+      - 'lcoe_sorted'      : (N,) float64
+      - 'prod_sorted'      : (N,) float64
+      - 'area_sorted'      : (N,) float64
+      - 'overlap_sorted'   : (N,) float64
       - 'tech_sorted_id'   : (N,) uint16 or None
       - 'tech_names'       : list[str] or None
       - 'left_positions'   : (N,) float64 cumulative prod "left edges" (MWh)
@@ -433,17 +443,21 @@ def prepare_global_order(
       - 'order'            : sort indices (aligned to masked arrays)
     """
     has_tech, tech_names = _detect_tech(ds, tech_dim, tech_coord)
-    lcoe, prod, tech_id = _flatten_for_sort(ds, lcoe_var, prod_var, tech_names)
+    lcoe, prod, area, overlap, tech_id = _flatten_for_sort(ds, lcoe_var, prod_var, area_var, overlap_var, tech_names)
 
     mask = np.isfinite(lcoe) & np.isfinite(prod)
     l_m = lcoe[mask]
     p_m = prod[mask]
+    a_m = area[mask]
     t_m = tech_id[mask] if tech_id is not None else None
 
     # Stable global sort
     order = np.argsort(l_m, kind="mergesort")
     lcoe_sorted = l_m[order]
     prod_sorted = p_m[order]
+    area_sorted = a_m[order]
+    # TODO: overlap does not have the tech dimension, so it is not ordered at the same time. Might have a problem.
+    overlap_sorted = overlap[order]
     tech_sorted_id = t_m[order] if t_m is not None else None
 
     # Cumulative production for bar positions (in MWh)
@@ -453,6 +467,8 @@ def prepare_global_order(
     return {
         "lcoe_sorted": lcoe_sorted,
         "prod_sorted": prod_sorted,
+        "area_sorted": area_sorted,
+        "overlap_sorted": overlap_sorted,
         "tech_sorted_id": tech_sorted_id,
         "tech_names": tech_names,
         "left_positions": left_positions,
@@ -638,10 +654,10 @@ def plot_supply_curve_bars(
 
 
 def build_land_use_curve_points(
-    ds: xr.Dataset,
+    # ds: xr.Dataset,
     prep: Dict[str, np.ndarray],
-    area_var: str = AREA_VAR,
-    overlap_var: str = OVERLAP_VAR
+    # area_var: str = AREA_VAR,
+    # overlap_var: str = OVERLAP_VAR
 ) -> Tuple[np.ndarray, np.ndarray, str]:
     """
     Builds the land-use curve with overlap behavior using the same global LCOE order:
@@ -654,21 +670,9 @@ def build_land_use_curve_points(
         The curve has 2 points per pixel: (flat end, rise end).
     Returns (x_points, y_points, x_label).
     """
-    mask = prep["mask"]
-    order = prep["order"]
-    # Flatten aux vars aligned to mask
-    area = _flatten_aux_var(ds, area_var, mask, prep["tech_names"])
-    overlap = _flatten_aux_var(ds, overlap_var, mask, prep["tech_names"])
 
-    # We need area/overlap sorted to match prod_sorted order
-    area_sorted = area[order]
-    overlap_sorted = overlap[order]
-
-    # Ensure non-negative
-    area_sorted = np.clip(area_sorted, 0, None)
-    overlap_sorted = np.clip(overlap_sorted, 0, None)
-
-    # prod_sorted already aligned with order
+    area_sorted = prep["area_sorted"]
+    overlap_sorted = prep["overlap_sorted"]
     prod_sorted = prep["prod_sorted"]
 
     # Production per area unit (guard zeros)

@@ -49,12 +49,12 @@ techs:
       regions_maritime: 0
       regions_land: 1
       protected: 0
-      landcover_FARM: 0.1
+      landcover_FARM: 0.05
       landcover_FOREST: 0
-      landcover_URBAN: 0
+      landcover_BARE: 0.1
       landcover_GRASS: 0.05
       landcover_SHRUB: 0.02
-      landcover_BARE: 0.1
+      landcover_URBAN: 0
       landcover_NOT_SUITABLE: 0
       landcover_WATER: 0
     density: 45
@@ -78,10 +78,10 @@ techs:
       protected: 0
       landcover_FARM: 0.4
       landcover_FOREST: 0.05
-      landcover_URBAN: 0
+      landcover_BARE: 0.7
       landcover_GRASS: 0.5
       landcover_SHRUB: 0.3
-      landcover_BARE: 0.7
+      landcover_URBAN: 0
       landcover_NOT_SUITABLE: 0
       landcover_WATER: 0
     density: 5

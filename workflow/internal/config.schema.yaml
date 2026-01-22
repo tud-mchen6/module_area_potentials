@@ -81,3 +81,6 @@ properties:
 
   min_protected_share:
     type: number
+
+  max_total_land_use_share:
+    type: boolean

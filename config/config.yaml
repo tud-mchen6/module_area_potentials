@@ -129,3 +129,5 @@ overrides:
 land_share_type: -1
 
 # min_protected_share: 0.00056922
+
+max_total_land_use_share: False

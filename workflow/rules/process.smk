@@ -65,6 +65,7 @@ rule area_potential:
         .get(wildcards.tech, {}),
         buffer_crs=lambda wildcards: config["buffer_crs"],
         min_protected_share=lambda wildcards: config.get("min_protected_share", 0),
+        max_total_land_use_share=lambda wildcards: config.get("max_total_land_use_share", False),
     input:
         script=workflow.source_path("../scripts/area_potential.py"),
         shapes=rules.breakup_shape.output,
@@ -81,7 +82,7 @@ rule area_potential:
         "../envs/default.yaml"
     shell:
         """
-        python {input.script:q} "{input.shapes}/{wildcards.subunit}.parquet" {input.resampled_path:q} {params.config:q} {params.buffer_crs:q} {output.area_potential:q} {output.plot:q} --override_config={params.subunit_override_config:q} --min_protected_share={params.min_protected_share:q} 2> {log:q}
+        python {input.script:q} "{input.shapes}/{wildcards.subunit}.parquet" {input.resampled_path:q} {params.config:q} {params.buffer_crs:q} {output.area_potential:q} {output.plot:q} {wildcards.tech} --override_config={params.subunit_override_config:q} --min_protected_share={params.min_protected_share:q} --max_total_land_use_share={params.max_total_land_use_share:q} 2> {log:q}
         """
 
 

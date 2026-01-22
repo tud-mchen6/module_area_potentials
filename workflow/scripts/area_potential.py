@@ -17,8 +17,10 @@ from _script_utils import plot_with_zero_separate
 @click.argument("buffer_crs", type=str)
 @click.argument("output_path", type=str)
 @click.argument("plot_path", type=str)
+@click.argument("tech", type=str)
 @click.option("--override_config", type=str)
 @click.option("--min_protected_share", type=float)
+@click.option("--max_total_land_use_share", type=bool, default=False)
 def get_area_potential(
     shapes_path,
     resampled_path,
@@ -26,8 +28,10 @@ def get_area_potential(
     buffer_crs,
     output_path,
     plot_path,
+    tech,
     override_config,
     min_protected_share,
+    max_total_land_use_share
 ):
     """Calculate the area potential based on the provided configuration.
 
@@ -73,6 +77,7 @@ def get_area_potential(
         else:
             print(f"Warning: Layer '{layer}' not found in dataset. Skipping.")
 
+
     # Add feature of min protected area as share of total territory
     # If necessary, adjust land use factors to reach the minimum protected share
     if min_protected_share > 0:
@@ -86,7 +91,6 @@ def get_area_potential(
             land_use_types = sorted(land_use_types, key=lambda x: priority.index(next(n for n in priority if n in x)))
             increased_protected = 0
             for land_use_type in land_use_types:
-                breakpoint()
                 if float(binary_layers[land_use_type]) == 0:
                     continue
                 type_total_area = (ds[land_use_type] * potential_da).sum()
@@ -117,6 +121,31 @@ def get_area_potential(
                 )
         else:
             print(f"Warning: Layer '{layer}' not found in dataset. Skipping.")
+
+    if max_total_land_use_share:
+        # Add feature of max land use area for onshore wind and open field PV
+        # Numbers coming from current Germany capacity, estimated with technology density
+        land_max_dict = {
+            'wind_onshore': 0.014, # Policy goal
+            'pv_open_field': 0.005, # Current land uptake estimation
+        }
+        if tech in land_max_dict:
+            # reduce the eligible area with the following sequence
+            priority = ['FOREST', 'SHRUB', 'GRASS', 'FARM', 'BARE']
+            breakpoint()
+            if potential_da.sum().values / ds['pixel_area'].sum().values > land_max_dict[tech]:
+                land_use_types = [k for k in binary_layers.keys() if any(n in k for n in priority)]
+                land_use_types = sorted(land_use_types, key=lambda x: priority.index(next(n for n in priority if n in x)))
+                for land_use_type in land_use_types:
+                    tot_area_land_type = (ds[land_use_type] * potential_da).sum().values
+                    # If this is the 'marginal land type'
+                    if (potential_da.sum().values - tot_area_land_type) / ds['pixel_area'].sum().values < land_max_dict[tech]:
+                        proportion = 1 + (land_max_dict[tech] * ds['pixel_area'].sum().values - potential_da.sum().values) / tot_area_land_type
+                        potential_da = xr.where(ds[land_use_type] != 0, potential_da * proportion, potential_da)
+                        break
+                    else:
+                        # If this is not a 'marginal land type', zero it out, and see if the next one is
+                        potential_da = xr.where(ds[land_use_type] != 0, 0, potential_da)
 
     # Apply shapes-based buffering
     if "shapes_buffer" in config:

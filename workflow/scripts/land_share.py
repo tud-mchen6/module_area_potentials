@@ -84,15 +84,12 @@ def land_share_calculation(
     ds_to_write = allocate_with_sharing_vectorized(ds_combined, land_share_type)
 
     print("approx GB:", ds_to_write.nbytes / 1e9)
-    print("dask chunks:", ds_to_write.chunks)  # if dask-backed
+    # print("dask chunks:", ds_to_write.chunks)  # if dask-backed
     
     ds_materialised = ds_to_write.compute()
 
     # Flatten the dataset and save to output
     prep = prepare_global_order(ds_materialised)
-    # x_points, y_points, x_label = build_land_use_curve_points(
-    #     ds_materialised,
-    #     prep)
     
     np.savez_compressed(output_path, **prep,)
 

@@ -136,8 +136,8 @@ def _rasterize_regions(shapes, reference_raster):
 @click.argument("settlement_path", type=str)
 @click.argument("bathymetry_path", type=str)
 @click.argument("protected_area_path", type=str)
-@click.argument("solar_atlas_path", type=str)
-@click.argument("wind_atlas_path", type=str)
+# @click.argument("solar_atlas_path", type=str)
+# @click.argument("wind_atlas_path", type=str)
 @click.argument("land_cover_configuration_yaml_string", type=str)
 @click.argument("output_path", type=str)
 @click.argument("plot_path", type=str)
@@ -148,8 +148,8 @@ def resample_inputs(
     settlement_path,
     bathymetry_path,
     protected_area_path,
-    solar_atlas_path,
-    wind_atlas_path,
+    # solar_atlas_path,
+    # wind_atlas_path,
     land_cover_configuration_yaml_string,
     output_path,
     plot_path,
@@ -279,31 +279,31 @@ def resample_inputs(
     del protected_areas
 
 
-    ##
-    # Solar atlas
-    ##
-    ds_solar_atlas = rxr.open_rasterio(solar_atlas_path)
-    ds_solar_atlas = ds_solar_atlas / 24 # daily value, need to convert to hourly value
-    # discard the pixels with capacity factor lower than 0.1
-    ds_solar_atlas = ds_solar_atlas.where(ds_solar_atlas >=0.1, other=np.nan)
-    print(f"Solar capacity factor resolution: {ds_solar_atlas.rio.resolution()}")
-    resampled["pv_cf"] = ds_solar_atlas.rio.reproject_match(
-        reference_raster, resampling=Resampling.average
-    )
-    del ds_solar_atlas
+    # ##
+    # # Solar atlas
+    # ##
+    # ds_solar_atlas = rxr.open_rasterio(solar_atlas_path)
+    # ds_solar_atlas = ds_solar_atlas / 24 # daily value, need to convert to hourly value
+    # # discard the pixels with capacity factor lower than 0.1
+    # ds_solar_atlas = ds_solar_atlas.where(ds_solar_atlas >=0.1, other=np.nan)
+    # print(f"Solar capacity factor resolution: {ds_solar_atlas.rio.resolution()}")
+    # resampled["pv_cf"] = ds_solar_atlas.rio.reproject_match(
+    #     reference_raster, resampling=Resampling.average
+    # )
+    # del ds_solar_atlas
 
 
-    ##
-    # Wind atlas
-    ##
-    ds_wind_atlas = rxr.open_rasterio(wind_atlas_path)
-    # discard the pixels with capacity factor lower than 0.1
-    ds_wind_atlas = ds_wind_atlas.where(ds_wind_atlas >=0.1, other=np.nan)
-    print(f"Wind capacity factor resolution: {ds_wind_atlas.rio.resolution()}")
-    resampled["wind_cf"] = ds_wind_atlas.rio.reproject_match(
-        reference_raster, resampling=Resampling.average
-    )
-    del ds_wind_atlas
+    # ##
+    # # Wind atlas
+    # ##
+    # ds_wind_atlas = rxr.open_rasterio(wind_atlas_path)
+    # # discard the pixels with capacity factor lower than 0.1
+    # ds_wind_atlas = ds_wind_atlas.where(ds_wind_atlas >=0.1, other=np.nan)
+    # print(f"Wind capacity factor resolution: {ds_wind_atlas.rio.resolution()}")
+    # resampled["wind_cf"] = ds_wind_atlas.rio.reproject_match(
+    #     reference_raster, resampling=Resampling.average
+    # )
+    # del ds_wind_atlas
 
 
     netcdf4_encoding = {

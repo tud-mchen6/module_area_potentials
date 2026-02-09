@@ -260,21 +260,21 @@ rule rasterise_clip_wdpa:
 # Solar Atlas
 ##
 
-rule download_solar_atlas:
-    message:
-        "Download the Solar Atlas data."
-    params:
-        url=internal["resources"]["automatic"]["solar_atlas"],
-    output:
-        path="resources/automatic/global/solar_atlas.zip",
-    log:
-        "logs/download_solar_atlas.log",
-    conda:
-        "../envs/shell.yaml"
-    shell:
-        """
-        curl -sSLo {output:q} {params.url:q}
-        """
+# rule download_solar_atlas:
+#     message:
+#         "Download the Solar Atlas data."
+#     params:
+#         url=internal["resources"]["automatic"]["solar_atlas"],
+#     output:
+#         path="resources/automatic/global/solar_atlas.zip",
+#     log:
+#         "logs/download_solar_atlas.log",
+#     conda:
+#         "../envs/shell.yaml"
+#     shell:
+#         """
+#         curl -sSLo {output:q} {params.url:q}
+#         """
 
 rule unzip_solar_atlas:
     message:
@@ -283,7 +283,8 @@ rule unzip_solar_atlas:
         target_file=internal["resources"]["automatic"]["solar_atlas_tif"],
     input:
         script=workflow.source_path("../scripts/unzip_like.py"),
-        zipfile=rules.download_solar_atlas.output,
+        # FIXME: temporary hack
+        zipfile="resources/automatic/global/solar_atlas.zip",
     output:
         "resources/automatic/global/PVOUT.tif",
     log:

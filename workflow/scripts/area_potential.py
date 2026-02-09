@@ -94,9 +94,11 @@ def get_area_potential(
                 if float(binary_layers[land_use_type]) == 0:
                     continue
                 type_total_area = (ds[land_use_type] * potential_da).sum()
+                # If this is the 'marginal land type', decrease the land use factor just enough to reach the minimum protected share, and break the loop
                 if (increased_protected + binary_layers[land_use_type] * type_total_area + ds['protected'].sum()) / ds['pixel_area'].sum() >= min_protected_share:
                     binary_layers[land_use_type] = binary_layers[land_use_type] - (min_protected_share * ds['pixel_area'].sum() - ds['protected'].sum() - increased_protected) / type_total_area
                     break
+                # If this is not a 'marginal land type', decrease the land use factor to 0, add to the increased protected area, and continue to the next land use type
                 else:
                     increased_protected += binary_layers[land_use_type] * type_total_area
                     binary_layers[land_use_type] = 0
@@ -132,19 +134,20 @@ def get_area_potential(
         if tech in land_max_dict:
             # reduce the eligible area with the following sequence
             priority = ['FOREST', 'SHRUB', 'GRASS', 'FARM', 'BARE']
-            breakpoint()
+            # If the total potential area exceeds the maximum land use share, reduce the potential area by zeroing out 
+            # land use types in the order of priority, until the total potential area is below the maximum land use share
             if potential_da.sum().values / ds['pixel_area'].sum().values > land_max_dict[tech]:
                 land_use_types = [k for k in binary_layers.keys() if any(n in k for n in priority)]
                 land_use_types = sorted(land_use_types, key=lambda x: priority.index(next(n for n in priority if n in x)))
                 for land_use_type in land_use_types:
                     tot_area_land_type = (ds[land_use_type] * potential_da).sum().values
-                    # If this is the 'marginal land type'
+                    # If this is the 'marginal land type', decrease the land use factor just enough to reach the maximum land use share, and break the loop
                     if (potential_da.sum().values - tot_area_land_type) / ds['pixel_area'].sum().values < land_max_dict[tech]:
                         proportion = 1 + (land_max_dict[tech] * ds['pixel_area'].sum().values - potential_da.sum().values) / tot_area_land_type
                         potential_da = xr.where(ds[land_use_type] != 0, potential_da * proportion, potential_da)
                         break
+                    # If this is not a 'marginal land type', zero it out, and see if the next one is
                     else:
-                        # If this is not a 'marginal land type', zero it out, and see if the next one is
                         potential_da = xr.where(ds[land_use_type] != 0, 0, potential_da)
 
     # Apply shapes-based buffering
